@@ -1,0 +1,141 @@
+Vision: Provide an engaging platform were software engineers can reinforce their technical and behavioral interviewing skills.
+
+Team Policies:
+- Keep it cool
+- Majority rules  
+- Keep the ball rolling
+
+---------------------------------------------------------------------------------------------------------------------
+
+Features:
+
+Top down two dimensional board
+
+Optional Local Multiplayer
+
+Single Player
+
+Players can select a game piece 
+
+Players will be able to create an account and store their data
+
+---------------------------------------------------------------------------------------------------------------------
+
+Single Player Gameplay Loop)
+-Start of Turn-
+Roll Dice to determine where what tile you land on
+-Action Phase-
+Depending on the tile you landed on you may:
+    - Purchase the Property
+    - Draw From Chance Deck
+    - Draw From Community Chest Deck
+    - Nothing Happens
+    - Get Laid Off 
+-Development Phase-
+Only if you own a monopoly:
+    - Select the monopoly you want to attempt to develop
+    - Answer a question, the difficulty of which is equivalent to the difficulty of the property
+    If your answer is correct and you do not have 4 houses:
+        - you gain a house on that property
+    If your answer is correct and you do have 4 houses:
+        - you gain a hotel on that property
+    If your answer is incorrect:
+        - nothing happens
+-Next Turn Begins-
+
+---------------------------------------------------------------------------------------------------------------------
+Single Player :
+Cease Fire System
+- Before game, select Small, Medium or Large game
+- Depending on that selection, a game is initialized with a predetermined amount of turns
+- At the end of those turns: the player is congratulated and given their score
+- Score is determined by the amount of properties you own and the difficulty level of your properties
+
+---------------------------------------------------------------------------------------------------------------------
+
+Rules For:
+
+Determining Ownership)
+-do you get the question correct-
+Yes) you get to own the property
+No) you do not get to own the property 
+
+
+Determining Score)
+The amount of score gained/lost is determined by the difficulty of the question answered 
+- Land on property unowned -
+  - Correct) add score 
+  - Incorrect) Score remains the same
+- Land on property owned -
+  - Correct) Score remains the same
+  - Incorrect) Score decrements
+
+Landing on a railroad)
+Just like a monopoly property, it is either owned or unowned.
+Land on Owned: Spin a wheel, determines question; LeetCode, Behavioral or System Design. If you answer the question wrong your score decrements depending on if the owner owns:
+    - 1 RR) -25 pts
+    - 2 RR) -50pts
+    - 1 RR) -100pts
+    - 2 RR) -200pts 
+Land on unowned: Spin a wheel, determines question; LeetCode, Behavioral or System Design. Answer the question to determine ownership.
+
+Landing on an easy monopoly property)
+If the property is:
+owned) The player will be prompted to answer an easy question from the predetermined question type.
+    If the answer is correct:
+        - The player will have 0 score taken from them and the owner will gain 0 score
+    If the answer is incorrect check if the owner has:
+        - 0 houses: player -10pts, owner +10pts
+        - 1 houses: player -50pts, owner +50pts
+        - 2 houses: player -150pts, owner +150pts
+        - 3 houses: player -450pts, owner +450pts
+        - 4 houses: player -750pts, owner +750pts
+        - 1 hotel: player -1150pts, owner +1150pts
+unowned) The player will be prompted to answer an easy question from the predetermined question type. 
+    If the answer is correct:
+        - The player will be granted ownership of the property
+    If the answer is incorrect: 
+        - The player will not be granted ownership of the property
+Landing on an medium monopoly property)
+
+Landing on an hard monopoly property)
+
+
+---------------------------------------------------------------------------------------------------------------------
+
+Board Layout:
+
+- Monopoly Property Tiles - (24)
+Every Monopoly will have three cards
+Brown) Difficulty Easy
+Light Blue) Difficulty Easy 
+Pink) Difficulty Medium
+Orange) Difficulty Medium
+Red) Difficulty Medium
+Yellow) Difficulty Medium
+Green) Difficulty Hard
+Blue) Difficulty Hard
+
+- Utilities - (2) 
+GitHub)
+AWS)
+
+- Railroads - (4)
+Emacs)
+Vim)
+VSCode)
+Jet-Brains)
+
+- Chance - (3)
+
+- Community Chest - (3)
+
+- Go - (1)
+
+- Get Laid Off - (1)
+
+- Unemployment / Vacation - (1)
+
+- Free Parking - (1)
+
+
