@@ -139,18 +139,21 @@ def post_roll():
     if GAME.get("skip_turn"):
         GAME["skip_turn"] = False
         GAME["turns"] -= 1
-        return {"skipped": True, "message": "Turn skipped", "pos": GAME["pos"], "pos_prev": GAME["pos_prev"], "path": [], "roll": 0}
+        return {"skipped": True, "message": "Turn skipped", "pos": GAME["pos"], "pos_prev": GAME["pos_prev"], "path": [], "d1": 0, "d2": 0, "total": 0}
 
-    roll = random.randint(1, 6)
+    d1 = random.randint(1, 6)
+    d2 = random.randint(1, 6)
+    total = d1 + d2
+
     old = GAME["pos"]
-    path = [ (old + i) % len(BOARD) for i in range(1, roll + 1) ]
+    path = [ (old + i) % len(BOARD) for i in range(1, total + 1) ]
     newp = path[-1]
 
     GAME["pos_prev"] = old
     GAME["pos"] = newp
     GAME["passed_start"] = newp < old
 
-    return {"skipped": False, "roll": roll, "pos": newp, "pos_prev": old, "path": path}
+    return {"skipped": False, "d1": d1, "d2": d2, "total": total, "pos": newp, "pos_prev": old, "path": path}
 
 @app.post("/prefetch")
 def post_prefetch(pos: int = Body(..., embed=True)):

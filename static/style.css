@@ -29,10 +29,19 @@ header h1{margin:0;font-weight:900;letter-spacing:.5px}
 .controls button#btn-new{background:#30363d;border-color:#6e7681}
 main{max-width:1200px;margin:0 auto;padding:8px 12px 24px}
 
+/* Stage wraps the board so we rotate the entire thing cleanly */
 #board-wrap{display:grid;place-items:center}
-.board{
+.stage{
   position:relative;
   width:960px;height:960px;
+  transform:rotate(0deg);
+  transform-origin:center center;
+  will-change: transform;            /* smoother rotation */
+}
+
+/* The grid lives inside the rotating stage */
+.board{
+  position:absolute; inset:0;
   display:grid;grid-template-columns:repeat(11,1fr);grid-template-rows:repeat(11,1fr);
   gap:var(--edge-gap);
   padding:6px;
@@ -79,7 +88,7 @@ main{max-width:1200px;margin:0 auto;padding:8px 12px 24px}
   transform:translate(-9999px,-9999px);transition:transform 260ms ease;z-index:30
 }
 
-/* property qkind badge — bottom-left, above pawn */
+/* property type badge — bottom-left, above pawn */
 .qbadge{
   position:absolute;
   left:6px; bottom:6px;
@@ -113,7 +122,7 @@ main{max-width:1200px;margin:0 auto;padding:8px 12px 24px}
 .dice.face-5 .pip:nth-child(1){left:18px;top:18px}.dice.face-5 .pip:nth-child(2){left:44px;top:18px}.dice.face-5 .pip:nth-child(3){left:31px;top:31px}.dice.face-5 .pip:nth-child(4){left:18px;top:44px}.dice.face-5 .pip:nth-child(5){left:44px;top:44px}
 .dice.face-6 .pip:nth-child(1){left:18px;top:16px}.dice.face-6 .pip:nth-child(2){left:44px;top:16px}.dice.face-6 .pip:nth-child(3){left:18px;top:30px}.dice.face-6 .pip:nth-child(4){left:44px;top:30px}.dice.face-6 .pip:nth-child(5){left:18px;top:46px}.dice.face-6 .pip:nth-child(6){left:44px;top:46px}
 
-/* loading indicator shown while prefetch/resolve is running */
+/* loading indicator */
 #loading{
   position:absolute; right:12px; top:12px;
   display:flex; align-items:center; gap:8px;
@@ -128,14 +137,13 @@ main{max-width:1200px;margin:0 auto;padding:8px 12px 24px}
 }
 @keyframes spin{to{transform:rotate(360deg)}}
 
-/* feedback / outcome */
+/* outcome + modal */
 .outcome{max-width:960px;margin:12px auto;padding:10px 12px;border-radius:10px;background:#141a22;border:1px solid #232a35}
 .outcome.success{border-color:#238636}
 .outcome.error{border-color:#f85149}
 .outcome.warning{border-color:#d29922}
 .hidden{display:none}
 
-/* modal */
 dialog{border:none;border-radius:16px;padding:0;background:#0b1117;color:#e6edf3;max-width:720px;width:90%}
 #pending-form{padding:16px}
 #pending-form h2{margin:0 0 8px}
