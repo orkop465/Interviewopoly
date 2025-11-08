@@ -19,6 +19,14 @@ Players can select a game piece
 
 Players will be able to create an account and store their data
 
+Players will be able to read the game rules
+
+Pause
+
+Save Quit
+
+Just Quit
+
 ---------------------------------------------------------------------------------------------------------------------
 
 Single Player Gameplay Loop)
@@ -112,7 +120,7 @@ owned) The player will be prompted to answer an medium question from the predete
         - 3 houses: player -850pts, owner +850pts
         - 4 houses: player -1150pts, owner +1150pts
         - 1 hotel: player -1350pts, owner +1350pts
-unowned) The player will be prompted to answer an easy question from the predetermined question type. 
+unowned) The player will be prompted to answer an medium question from the predetermined question type. 
     If the answer is correct:
         - The player will be granted ownership of the property
     If the answer is incorrect: 
@@ -184,21 +192,27 @@ Jet-Brains)
 
 App Flow:
 
-Home Screen Navigation:
-    - Start Game -> Game Screen
-    - Continue Game -> Saved Game Screen
+Home Screen Page:
+    - Start Game -> Create Game
+    - Continue Game -> Game Screen
     - Create Account -> Home Screen
         - email
         - password
         - confirm password
-    - Login -> Home Screen
+    - Login (Only When Not Signed In)-> Home Screen
         - email
         - password
-
+    - Logout: Are you sure? Yes or No
     -Rules -> Rules Page
-Game Screen Navigation:
+Game Screen Page:
     - Rules -> Rules Page
-    - Pause -> Save Quit
+    - Pause
+        - Save Quit: Are you sure? It will overwrite any previous saves
+        - Just Quit: Are you sure? It will not save your current game
     - 
-    -
-
+Create Game Page:
+- Single or Local Multiplayer
+- If Multiplayer, how many players
+- Every player selects one of n pieces
+Rules Page:
+- Displays rules broke into sections
