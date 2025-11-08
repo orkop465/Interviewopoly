@@ -73,10 +73,10 @@ The amount of score gained/lost is determined by the difficulty of the question 
 Landing on a railroad)
 Just like a monopoly property, it is either owned or unowned.
 Land on Owned: Spin a wheel, determines question; LeetCode, Behavioral or System Design. If you answer the question wrong your score decrements depending on if the owner owns:
-    - 1 RR) -25 pts
-    - 2 RR) -50pts
-    - 1 RR) -100pts
-    - 2 RR) -200pts 
+    - 1 RR) player -25pts, owner +25pts
+    - 2 RR) player -50pts, owner +50pts
+    - 1 RR) player -100pts, owner +100pts
+    - 2 RR) player -200pts, owner +200pts 
 Land on unowned: Spin a wheel, determines question; LeetCode, Behavioral or System Design. Answer the question to determine ownership.
 
 Landing on an easy monopoly property)
@@ -96,9 +96,42 @@ unowned) The player will be prompted to answer an easy question from the predete
         - The player will be granted ownership of the property
     If the answer is incorrect: 
         - The player will not be granted ownership of the property
+
 Landing on an medium monopoly property)
+If the property is:
+owned) The player will be prompted to answer an medium question from the predetermined question type.
+    If the answer is correct:
+        - The player will have 0 score taken from them and the owner will gain 0 score
+    If the answer is incorrect check if the owner has:
+        - 0 houses: player -25pts, owner +25pts
+        - 1 houses: player -125pts, owner +125pts
+        - 2 houses: player -400pts, owner +400pts
+        - 3 houses: player -850pts, owner +850pts
+        - 4 houses: player -1150pts, owner +1150pts
+        - 1 hotel: player -1350pts, owner +1350pts
+unowned) The player will be prompted to answer an easy question from the predetermined question type. 
+    If the answer is correct:
+        - The player will be granted ownership of the property
+    If the answer is incorrect: 
+        - The player will not be granted ownership of the property
 
 Landing on an hard monopoly property)
+If the property is:
+owned) The player will be prompted to answer an hard question from the predetermined question type.
+    If the answer is correct:
+        - The player will have 0 score taken from them and the owner will gain 0 score
+    If the answer is incorrect check if the owner has:
+        - 0 houses: player -50pts, owner +50pts
+        - 1 houses: player -250pts, owner +250pts
+        - 2 houses: player -700pts, owner +700pts
+        - 3 houses: player -1250pts, owner +1250pts
+        - 4 houses: player -1750pts, owner +1750pts
+        - 1 hotel: player -2000pts, owner +2000pts
+unowned) The player will be prompted to answer an easy question from the predetermined question type. 
+    If the answer is correct:
+        - The player will be granted ownership of the property
+    If the answer is incorrect: 
+        - The player will not be granted ownership of the property
 
 
 ---------------------------------------------------------------------------------------------------------------------
@@ -106,7 +139,7 @@ Landing on an hard monopoly property)
 Board Layout:
 
 - Monopoly Property Tiles - (24)
-Every Monopoly will have three cards
+Every Monopoly will have three cards, one from each category, LeetCode, Behavioral or System Design.
 Brown) Difficulty Easy
 Light Blue) Difficulty Easy 
 Pink) Difficulty Medium
