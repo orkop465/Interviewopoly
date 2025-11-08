@@ -23,13 +23,14 @@ let STATE = null;
 // side 2 (top)    => -180deg
 // side 3 (right)  => -270deg
 let ROT_DEG = 0;
+let INIT_DONE = false; // only snap once on first load
 
 function idx_to_rc(i){
   i = ((i % 40) + 40) % 40;
-  if (i <= 9) return [10, 10 - i];         // bottom
-  if (i <= 19) return [10 - (i - 10), 0];  // left
-  if (i <= 29) return [0, i - 20];         // top
-  return [i - 30, 10];                     // right
+  if (i <= 9) return [10, 10 - i];
+  if (i <= 19) return [10 - (i - 10), 0];
+  if (i <= 29) return [0, i - 20];
+  return [i - 30, 10];
 }
 function sideForIndex(i){
   i = ((i % 40) + 40) % 40;
@@ -38,7 +39,8 @@ function sideForIndex(i){
   if (i <= 29) return 2;
   return 3;
 }
-function isCorner(i){ return i === 0 || i === 10 || i === 20 || i === 30; }
+const CORNERS = new Set([0,10,20,30]);
+function isCorner(i){ return CORNERS.has(((i % 40)+40)%40); }
 
 function isRR(t){ return t.ttype === "COMPANY" && t.payload?.group === "RR"; }
 function isUTIL(t){ return t.ttype === "COMPANY" && t.payload?.group === "UTIL"; }
@@ -65,6 +67,8 @@ function emojiFor(t){
   return "";
 }
 
+/* -------------------- Overlays -------------------- */
+
 function ensurePawnOverlay(){
   const wrap = el("#board-wrap");
   if (!wrap) return;
@@ -90,6 +94,65 @@ function ensurePawnOverlay(){
     overlay.appendChild(pawn);
   }
 }
+
+// Non-rotating HUD overlay (top-right loading chip)
+let SPINNER_CSS_INJECTED = false;
+function ensureHudOverlay(){
+  const wrap = el("#board-wrap");
+  if (!wrap) return;
+
+  let hud = el("#hud-overlay");
+  if (!hud){
+    hud = document.createElement("div");
+    hud.id = "hud-overlay";
+    Object.assign(hud.style, {
+      position:"absolute", inset:"0", pointerEvents:"none", zIndex:"65"
+    });
+    wrap.appendChild(hud);
+  }
+
+  let chip = el("#hud-loading");
+  if (!chip){
+    chip = document.createElement("div");
+    chip.id = "hud-loading";
+    Object.assign(chip.style, {
+      position:"absolute", top:"8px", right:"8px",
+      display:"none",
+      background:"#fff",
+      borderRadius:"10px",
+      padding:"6px 10px",
+      boxShadow:"0 10px 30px rgba(0,0,0,.25), inset 0 0 0 1px rgba(0,0,0,.05)",
+      fontWeight:"800",
+      color:"#111",
+      gap:"8px",
+      alignItems:"center",
+      pointerEvents:"none"
+    });
+    const dot = document.createElement("div");
+    Object.assign(dot.style, {
+      width:"14px", height:"14px", borderRadius:"50%",
+      border:"3px solid #1115", borderTopColor:"#111",
+      marginRight:"6px",
+      animation:"spin 1s linear infinite"
+    });
+    const txt = document.createElement("span");
+    txt.textContent = "Preparing question…";
+    txt.style.verticalAlign = "middle";
+
+    chip.appendChild(dot);
+    chip.appendChild(txt);
+    hud.appendChild(chip);
+
+    if (!SPINNER_CSS_INJECTED){
+      const style = document.createElement("style");
+      style.textContent = "@keyframes spin{to{transform:rotate(360deg)}}";
+      document.head.appendChild(style);
+      SPINNER_CSS_INJECTED = true;
+    }
+  }
+}
+
+/* -------------------- Board build -------------------- */
 
 function buildBoard(){
   const board = el("#board");
@@ -149,6 +212,7 @@ function centerOf(elm){
   return [r.left + r.width/2 + window.scrollX, r.top + r.height/2 + window.scrollY];
 }
 
+// Pawn lives in the non-rotating overlay
 function placePawnAtIndex(idx, instant=false){
   ensurePawnOverlay();
   const pawn = el("#pawn");
@@ -185,54 +249,66 @@ function updateDiceCounterRotation(){
 
 /* ---------- Rotation helpers (pivot around center, always CCW) ---------- */
 
-// Snap instantly to keep the current side at the bottom
 function snapStageRotationForSide(side){
-  ROT_DEG = (-90 * side); // no modulo here; keep absolute to avoid normalization quirks
+  ROT_DEG = (-90 * side);
   const stage = el(".stage");
   stage.style.transformOrigin = "50% 50%";
   stage.style.transform = `rotate(${ROT_DEG}deg)`;
-  normalizeRot();          // normalize after applying
+  normalizeRot();
   updateDiceCounterRotation();
 }
 
-// Animate exactly -90deg (counter-clockwise) from the current angle.
-// Do NOT modulo inside the animation to avoid the browser taking the long path.
 async function rotateStageCCW90Center(){
   const stage = el(".stage");
   stage.style.transformOrigin = "50% 50%";
   const from = ROT_DEG;
-  const to = ROT_DEG - 90;           // strictly CCW by 90
+  const to = ROT_DEG - 90; // strictly CCW by 90
   const anim = stage.animate(
     [{ transform: `rotate(${from}deg)` }, { transform: `rotate(${to}deg)` }],
     { duration: 600, easing: "cubic-bezier(.22,.61,.36,1)", fill: "forwards" }
   );
   await anim.finished.catch(()=>{});
   ROT_DEG = to;
-  normalizeRot();                    // fold full turns back to canonical range without animation
+  normalizeRot();
   updateDiceCounterRotation();
 }
 
-// Fold multiples of 360 so we stay near 0, -90, -180, -270 after any animation
 function normalizeRot(){
   if (ROT_DEG <= -360 || ROT_DEG >= 360){
     const stage = el(".stage");
-    // compute normalized angle equivalent to ROT_DEG
     const k = Math.round(ROT_DEG / 360);
     const norm = ROT_DEG - k * 360;
-    // jump instantly to normalized equivalent to avoid future long-path animations
     stage.style.transform = `rotate(${norm}deg)`;
     ROT_DEG = norm;
   }
 }
 
-// Rotate only if you actually passed a corner; never when landing on a corner
-async function rotateIfCrossedCorner(oldIndex, newIndex){
-  if (isCorner(newIndex)) return;
-  const oldSide = sideForIndex(oldIndex);
-  const newSide = sideForIndex(newIndex);
-  const advancedOneSide = (oldSide + 1) % 4 === newSide;
-  if (advancedOneSide){
+/* ----- Rotation driven by displayed side, ignoring corner landings ----- */
+function displaySide(){
+  let s = Math.round((-ROT_DEG) / 90) % 4;
+  if (s < 0) s += 4;
+  return s;
+}
+
+async function rotateToMatchSide(targetSide){
+  let cur = displaySide();
+  while (cur !== targetSide){
     await rotateStageCCW90Center();
+    cur = displaySide();
+  }
+}
+
+async function rotateForPathUsingDisplaySide(startIndex, path){
+  if (!Array.isArray(path) || path.length === 0) return;
+  const seq = [startIndex, ...path.map(x => ((x % 40)+40)%40)];
+
+  for (let i = 1; i < seq.length; i++){
+    const target = seq[i];
+    if (isCorner(target)) continue;            // never rotate on corner landings
+    const tSide = sideForIndex(target);
+    if (tSide !== displaySide()){
+      await rotateToMatchSide(tSide);
+    }
   }
 }
 
@@ -257,8 +333,13 @@ function renderOutcome(outc){
 /* -------------------- Loading / Dice -------------------- */
 
 function setLoading(on){
-  const overlay = el("#loading");
-  overlay.classList.toggle("hidden", !on);
+  ensureHudOverlay();
+  const hudChip = el("#hud-loading");
+  if (hudChip) hudChip.style.display = on ? "flex" : "none";
+
+  const rotating = el("#loading");   // keep the rotating one hidden permanently
+  if (rotating) rotating.classList.add("hidden");
+
   const btn = el("#btn-roll");
   btn.disabled = on;
   btn.classList.toggle("disabled", on);
@@ -270,20 +351,20 @@ function setPawnVisible(show){
   pawn.style.opacity = show ? "1" : "0";
 }
 
-/* ---- Dice (already fixed to 7 anchor pips) ---- */
+/* ---- Dice (7 anchor pips) ---- */
 
 function initDice(){
   const dice = [el("#die1"), el("#die2")].filter(Boolean);
   dice.forEach(d => {
     d.innerHTML = "";
     const anchors = [
-      {left:"14px", top:"14px"},      // 1 TL
-      {right:"14px", top:"14px"},     // 2 TR
-      {left:"14px", top:"31px"},      // 3 ML
-      {left:"31px", top:"31px"},      // 4 MM
-      {right:"14px", top:"31px"},     // 5 MR
-      {left:"14px", bottom:"14px"},   // 6 BL
-      {right:"14px", bottom:"14px"}   // 7 BR
+      {left:"14px", top:"14px"},
+      {right:"14px", top:"14px"},
+      {left:"14px", top:"31px"},
+      {left:"31px", top:"31px"},
+      {right:"14px", top:"31px"},
+      {left:"14px", bottom:"14px"},
+      {right:"14px", bottom:"14px"}
     ];
     for (let i = 0; i < 7; i++){
       const p = document.createElement("div");
@@ -348,11 +429,17 @@ async function refresh(){
   BOARD = data.board;
 
   ensurePawnOverlay();
+  ensureHudOverlay();
   buildBoard();
   updateHud();
 
-  const side = sideForIndex(STATE.pos);
-  snapStageRotationForSide(side);   // updates counter-rotation too
+  if (!INIT_DONE){
+    const side = sideForIndex(STATE.pos);
+    snapStageRotationForSide(side);
+    INIT_DONE = true;
+  } else {
+    updateDiceCounterRotation();
+  }
 
   setPawnVisible(true);
   placePawnAtIndex(STATE.pos, true);
@@ -371,6 +458,13 @@ async function walkPath(path, stepMs){
   }
 }
 
+function findIndexByType(ttype){
+  for (let i = 0; i < BOARD.length; i++){
+    if (BOARD[i]?.ttype === ttype) return i;
+  }
+  return -1;
+}
+
 async function doRoll(){
   const btn = el("#btn-roll");
   btn.disabled = true;
@@ -383,6 +477,9 @@ async function doRoll(){
     btn.disabled = false;
     return;
   }
+
+  const landedGotoJail = (BOARD[data.pos]?.ttype === "GOTO_JAIL");
+  const jailIdx = findIndexByType("JAIL");
 
   // Prefetch during animations (no UI block)
   setLoading(true);
@@ -398,18 +495,29 @@ async function doRoll(){
   await walkPath(data.path, 260);
   el("#dice-overlay").classList.add("hidden");
 
-  // Hide pawn while the board rotates so it doesn't "float"
+  // Hide pawn while rotating so it doesn't "float"
   setPawnVisible(false);
-  await rotateIfCrossedCorner(data.pos_prev, data.pos);
 
-  // After rotation, snap pawn precisely to the landing tile and show it again
+  // Rotate based on path traversed (ignores corner landings)
+  await rotateForPathUsingDisplaySide(data.pos_prev, data.path);
+
+  // After rotation, snap pawn to the landing tile
   placePawnAtIndex(data.pos, true);
-  setPawnVisible(true);
 
-  // Then resolve landing
+  // Resolve landing on server (this may teleport to Jail)
   const res2 = await fetch("/resolve", {method:"POST"});
   const rdata = await res2.json();
 
+  // If we landed on GOTO_JAIL, visually rotate two more times CCW to the opposite corner,
+  // then snap pawn onto the Jail tile before refreshing HUD/state.
+  if (landedGotoJail && jailIdx >= 0){
+    // Two CCW quarter-turns
+    await rotateStageCCW90Center();
+    await rotateStageCCW90Center();
+    placePawnAtIndex(jailIdx, true);
+  }
+
+  setPawnVisible(true);
   setLoading(false);
 
   if (rdata.pending){
@@ -476,10 +584,17 @@ function openPending(p){
 
 document.addEventListener("DOMContentLoaded", async () => {
   ensurePawnOverlay();
+  ensureHudOverlay();
   initDice();
 
-  el("#btn-new").onclick = async () => { await fetch("/new", {method:"POST"}); await refresh(); };
+  el("#btn-new").onclick = async () => {
+    ROT_DEG = 0;
+    INIT_DONE = false;
+    await fetch("/new", {method:"POST"});
+    await refresh();
+  };
   el("#btn-roll").onclick = doRoll;
+
   await refresh();
 
   updateDiceCounterRotation();

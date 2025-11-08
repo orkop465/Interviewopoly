@@ -4,6 +4,7 @@ from typing import Dict, Any
 from fastapi import FastAPI, Body
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
+from collections import deque
 
 from board import BOARD, Tile
 from logic import (
@@ -14,6 +15,12 @@ from logic import (
 )
 
 GAME: Dict[str, Any] = {}
+
+FORCED_ROLLS = deque([
+    (5, 5),
+    (5, 5),
+    (5, 5),
+])
 
 def new_game():
     GAME.clear()
@@ -34,11 +41,13 @@ def new_game():
         "passed_start": False,
     })
 
+
 def end_turn():
     if GAME.get("extra_roll"):
         GAME["extra_roll"] = False
     else:
         GAME["turns"] -= 1
+
 
 def side_for_index(i: int) -> str:
     i %= 40
@@ -50,6 +59,7 @@ def side_for_index(i: int) -> str:
         return "TOP"
     return "RIGHT"
 
+
 def lc_diff_for_side(i: int) -> str:
     side = side_for_index(i)
     if side == "BOTTOM":
@@ -57,6 +67,7 @@ def lc_diff_for_side(i: int) -> str:
     if side in ("LEFT", "TOP"):
         return "MEDIUM"
     return "HARD"
+
 
 def resolve_non_llm_immediate(tile: Tile):
     if GAME.get("passed_start"):
@@ -98,13 +109,16 @@ def resolve_non_llm_immediate(tile: Tile):
 
     return {"pending": None}
 
+
 app = FastAPI()
 app.mount("/static", StaticFiles(directory="static"), name="static")
+
 
 @app.get("/", response_class=HTMLResponse)
 def index():
     with open("static/index.html", "r", encoding="utf-8") as f:
         return HTMLResponse(f.read())
+
 
 @app.get("/state")
 def get_state():
@@ -126,10 +140,12 @@ def get_state():
         ],
     }
 
+
 @app.post("/new")
 def post_new():
     new_game()
     return {"ok": True}
+
 
 @app.post("/roll")
 def post_roll():
@@ -139,14 +155,18 @@ def post_roll():
     if GAME.get("skip_turn"):
         GAME["skip_turn"] = False
         GAME["turns"] -= 1
-        return {"skipped": True, "message": "Turn skipped", "pos": GAME["pos"], "pos_prev": GAME["pos_prev"], "path": [], "d1": 0, "d2": 0, "total": 0}
+        return {"skipped": True, "message": "Turn skipped", "pos": GAME["pos"], "pos_prev": GAME["pos_prev"],
+                "path": [], "d1": 0, "d2": 0, "total": 0}
 
-    d1 = random.randint(1, 6)
-    d2 = random.randint(1, 6)
+    if FORCED_ROLLS:
+        d1, d2 = FORCED_ROLLS.popleft()
+    else:
+        d1 = random.randint(1, 6)
+        d2 = random.randint(1, 6)
     total = d1 + d2
 
     old = GAME["pos"]
-    path = [ (old + i) % len(BOARD) for i in range(1, total + 1) ]
+    path = [(old + i) % len(BOARD) for i in range(1, total + 1)]
     newp = path[-1]
 
     GAME["pos_prev"] = old
@@ -154,6 +174,7 @@ def post_roll():
     GAME["passed_start"] = newp < old
 
     return {"skipped": False, "d1": d1, "d2": d2, "total": total, "pos": newp, "pos_prev": old, "path": path}
+
 
 @app.post("/prefetch")
 def post_prefetch(pos: int = Body(..., embed=True)):
@@ -176,6 +197,7 @@ def post_prefetch(pos: int = Body(..., embed=True)):
         GAME["prefetch"] = None
 
     return {"ok": True, "has_prefetch": GAME["prefetch"] is not None}
+
 
 @app.post("/resolve")
 def post_resolve():
@@ -206,6 +228,7 @@ def post_resolve():
     GAME["prefetch"] = None
     return resolve_non_llm_immediate(landing)
 
+
 @app.post("/submit_answer")
 def post_submit_answer(payload: Dict[str, Any]):
     p = GAME.get("pending")
@@ -224,10 +247,14 @@ def post_submit_answer(payload: Dict[str, Any]):
         if res["pass_fail"] == "PASS":
             GAME["cash"] += rewards["pass_cash"]
             GAME["offers"] += rewards["pass_offers"]
-            GAME["last_outcome"] = {"kind": "success", "title": f"PASS (rating {res['rating']}) — +${rewards['pass_cash']}, +{rewards['pass_offers']} offers", "feedback": res["feedback"]}
+            GAME["last_outcome"] = {"kind": "success",
+                                    "title": f"PASS (rating {res['rating']}) — +${rewards['pass_cash']}, +{rewards['pass_offers']} offers",
+                                    "feedback": res["feedback"]}
         else:
             GAME["cash"] += rewards["fail_cash"]
-            GAME["last_outcome"] = {"kind": "error", "title": f"FAIL (rating {res['rating']}) — {rewards['fail_cash']} cash", "feedback": res["feedback"]}
+            GAME["last_outcome"] = {"kind": "error",
+                                    "title": f"FAIL (rating {res['rating']}) — {rewards['fail_cash']} cash",
+                                    "feedback": res["feedback"]}
 
     elif kind == "SYS_DESIGN":
         q = p["question"]
@@ -236,14 +263,17 @@ def post_submit_answer(payload: Dict[str, Any]):
         if rating >= 4:
             GAME["cash"] += 150
             GAME["offers"] += 3
-            GAME["last_outcome"] = {"kind": "success", "title": f"Strong design (rating {rating}) — +$150, +3 offers", "feedback": res.get("feedback", "")}
+            GAME["last_outcome"] = {"kind": "success", "title": f"Strong design (rating {rating}) — +$150, +3 offers",
+                                    "feedback": res.get("feedback", "")}
         elif rating == 3:
             GAME["cash"] += 50
             GAME["offers"] += 1
-            GAME["last_outcome"] = {"kind": "warning", "title": "Decent (rating 3) — +$50, +1 offer", "feedback": res.get("feedback", "")}
+            GAME["last_outcome"] = {"kind": "warning", "title": "Decent (rating 3) — +$50, +1 offer",
+                                    "feedback": res.get("feedback", "")}
         else:
             GAME["cash"] -= 50
-            GAME["last_outcome"] = {"kind": "error", "title": f"Weak (rating {rating}) — -$50", "feedback": res.get("feedback", "")}
+            GAME["last_outcome"] = {"kind": "error", "title": f"Weak (rating {rating}) — -$50",
+                                    "feedback": res.get("feedback", "")}
 
     elif kind == "BEHAVIORAL":
         res = score_beh_answer(text)
@@ -251,16 +281,20 @@ def post_submit_answer(payload: Dict[str, Any]):
         if rating >= 4:
             GAME["cash"] += 80
             GAME["offers"] += 2
-            GAME["last_outcome"] = {"kind": "success", "title": f"Strong (rating {rating}) — +$80, +2 offers", "feedback": res.get("feedback", "")}
+            GAME["last_outcome"] = {"kind": "success", "title": f"Strong (rating {rating}) — +$80, +2 offers",
+                                    "feedback": res.get("feedback", "")}
         elif rating == 3:
             GAME["cash"] += 30
             GAME["offers"] += 1
-            GAME["last_outcome"] = {"kind": "warning", "title": "Okay (rating 3) — +$30, +1 offer", "feedback": res.get("feedback", "")}
+            GAME["last_outcome"] = {"kind": "warning", "title": "Okay (rating 3) — +$30, +1 offer",
+                                    "feedback": res.get("feedback", "")}
         else:
             GAME["cash"] -= 20
-            GAME["last_outcome"] = {"kind": "error", "title": f"Needs work (rating {rating}) — -$20", "feedback": res.get("feedback", "")}
+            GAME["last_outcome"] = {"kind": "error", "title": f"Needs work (rating {rating}) — -$20",
+                                    "feedback": res.get("feedback", "")}
 
     GAME["pending"] = None
     end_turn()
 
-    return {"ok": True, "cash": GAME["cash"], "offers": GAME["offers"], "turns": GAME["turns"], "last_outcome": GAME["last_outcome"]}
+    return {"ok": True, "cash": GAME["cash"], "offers": GAME["offers"], "turns": GAME["turns"],
+            "last_outcome": GAME["last_outcome"]}
