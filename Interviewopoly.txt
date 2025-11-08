@@ -27,6 +27,7 @@ Roll Dice to determine where what tile you land on
 -Action Phase-
 Depending on the tile you landed on you may:
     - Purchase the Property
+    - Pay Property Rent
     - Draw From Chance Deck
     - Draw From Community Chest Deck
     - Nothing Happens
@@ -34,10 +35,12 @@ Depending on the tile you landed on you may:
 -Development Phase-
 Only if you own a monopoly:
     - Select the monopoly you want to attempt to develop
+    - Select the property within that monopoly you want to attempt to develop
+    - The monopoly must not have a hotel already on it
     - Answer a question, the difficulty of which is equivalent to the difficulty of the property
-    If your answer is correct and you do not have 4 houses:
+    If your answer is correct and you have < 4 houses:
         - you gain a house on that property
-    If your answer is correct and you do have 4 houses:
+    If your answer is correct and you have 4 houses:
         - you gain a hotel on that property
     If your answer is incorrect:
         - nothing happens
@@ -70,14 +73,14 @@ The amount of score gained/lost is determined by the difficulty of the question 
   - Correct) Score remains the same
   - Incorrect) Score decrements
 
-Landing on a railroad)
+Landing on a railroad) 
 Just like a monopoly property, it is either owned or unowned.
-Land on Owned: Spin a wheel, determines question; LeetCode, Behavioral or System Design. If you answer the question wrong your score decrements depending on if the owner owns:
+Land on Owned: Spin a wheel, determines medium question; LeetCode, Behavioral or System Design. If you answer the question wrong your score decrements depending on if the owner owns:
     - 1 RR) player -25pts, owner +25pts
     - 2 RR) player -50pts, owner +50pts
     - 1 RR) player -100pts, owner +100pts
     - 2 RR) player -200pts, owner +200pts 
-Land on unowned: Spin a wheel, determines question; LeetCode, Behavioral or System Design. Answer the question to determine ownership.
+Land on unowned: Spin a wheel, determines medium question; LeetCode, Behavioral or System Design. Answer the question to determine ownership.
 
 Landing on an easy monopoly property)
 If the property is:
@@ -133,6 +136,12 @@ unowned) The player will be prompted to answer an easy question from the predete
     If the answer is incorrect: 
         - The player will not be granted ownership of the property
 
+Landing on a utility)
+If the property is:
+owned)
+
+unowned) 
+
 
 ---------------------------------------------------------------------------------------------------------------------
 
@@ -171,4 +180,25 @@ Jet-Brains)
 
 - Free Parking - (1)
 
+---------------------------------------------------------------------------------------------------------------------
+
+App Flow:
+
+Home Screen Navigation:
+    - Start Game -> Game Screen
+    - Continue Game -> Saved Game Screen
+    - Create Account -> Home Screen
+        - email
+        - password
+        - confirm password
+    - Login -> Home Screen
+        - email
+        - password
+
+    -Rules -> Rules Page
+Game Screen Navigation:
+    - Rules -> Rules Page
+    - Pause -> Save Quit
+    - 
+    -
 
