@@ -2,7 +2,7 @@
 const GROUP_COLORS = {
   BROWN:"#8B4513", LIGHT_BLUE:"#ADD8E6", PINK:"#FF69B4", ORANGE:"#FFA500",
   RED:"#D32F2F", YELLOW:"#F7D154", GREEN:"#2E7D32", DARK_BLUE:"#0D47A1",
-  RR:"#6B7280", UTIL:null // RR bar color adjusted for readability
+  RR:"#6B7280", UTIL:null
 };
 const BOARD_BLUE = "#CFEFE9";
 const el = (sel) => document.querySelector(sel);
@@ -12,7 +12,7 @@ let STATE = null;
 let ROT_DEG = 0;
 let INIT_DONE = false;
 
-/* Keep track of a dismissed outcome so it doesn't pop right back after refresh */
+/* track last dismissed outcome to avoid immediate re-show after refresh */
 let OUTCOME_DISMISSED_SIG = null;
 
 /* ---------- Board helpers ---------- */
@@ -68,7 +68,7 @@ function ensurePawnOverlay(){
   if (pawn.parentElement !== overlay) overlay.appendChild(pawn);
 }
 
-/* ---------- Loader as top-layer modal dialog ---------- */
+/* ---------- Loader dialog ---------- */
 let LOADING_CSS_INJECTED = false;
 function ensureHudOverlay(){
   let dlg = document.querySelector("#loading-dialog");
@@ -236,7 +236,6 @@ function renderOutcome(outc){
   const box = el("#outcome");
   const backdrop = ensureOutcomeBackdrop();
 
-  // nothing to show
   if (!outc){
     box.classList.add("hidden");
     backdrop.classList.add("hidden");
@@ -244,7 +243,6 @@ function renderOutcome(outc){
     return;
   }
 
-  // If user dismissed this exact message already, keep it hidden until a new one arrives
   const sig = outcomeSig(outc);
   if (OUTCOME_DISMISSED_SIG && OUTCOME_DISMISSED_SIG === sig){
     box.classList.add("hidden");
@@ -253,8 +251,7 @@ function renderOutcome(outc){
     return;
   }
 
-  // Build inner HTML with Close button
-  box.className = "outcome"; // reset plus base class
+  box.className = "outcome";
   if (outc.kind) box.classList.add(outc.kind);
   const title = outc.title || "";
   const feedback = outc.feedback || "";
@@ -264,7 +261,6 @@ function renderOutcome(outc){
     <div class="actions"><button type="button" id="outcome-close">Close</button></div>
   `;
 
-  // Show and block interactions beneath
   box.classList.remove("hidden");
   backdrop.classList.remove("hidden");
   setRollEnabled(false);
@@ -280,9 +276,8 @@ function renderOutcome(outc){
   }
 }
 
-/* ---------- HUD / outcome ---------- */
+/* ---------- HUD ---------- */
 function updateHud(){
-  // Cash removed from HUD
   el("#m-offers").textContent = STATE.offers;
   el("#m-turns").textContent = STATE.turns;
   el("#m-owned").textContent = STATE.owned.length;
@@ -292,8 +287,14 @@ function updateHud(){
 function initDice(){
   const dice=[el("#die1"),el("#die2")].filter(Boolean);
   dice.forEach(d=>{
-    d.innerHTML=""; const anchors=[{left:"14px",top:"14px"},{right:"14px",top:"14px"},{left:"14px",top:"31px"},{left:"31px",top:"31px"},{right:"14px",top:"31px"},{left:"14px",bottom:"14px"},{right:"14px",bottom:"14px"}];
-    for(let i=0;i<7;i++){ const p=document.createElement("div"); p.className="pip"; p.dataset.pip=String(i+1); Object.assign(p.style,{position:"absolute",width:"10px",height:"10px",borderRadius:"50%",background:"#111",opacity:"0",...anchors[i]}); d.appendChild(p); }
+    d.innerHTML="";
+    const anchors=[{left:"14px",top:"14px"},{right:"14px",top:"14px"},{left:"14px",top:"31px"},{left:"31px",top:"31px"},{right:"14px",top:"31px"},{left:"14px",bottom:"14px"},{right:"14px",bottom:"14px"}];
+    for(let i=0;i<7;i++){
+      const p=document.createElement("div");
+      p.className="pip"; p.dataset.pip=String(i+1);
+      Object.assign(p.style,{position:"absolute",width:"10px",height:"10px",borderRadius:"50%",background:"#111",opacity:"0",...anchors[i]});
+      d.appendChild(p);
+    }
   });
 }
 function diceSetFace(elem, face){
@@ -310,13 +311,13 @@ function spinTwoDiceFor(ms, face1, face2){
   });
 }
 
-/* ---------- Question tile expectation (RR included) ---------- */
+/* ---------- Question tile expectation ---------- */
 function willTileProduceQuestion(tile){
   if (!tile) return false;
   if (tile.ttype !== "COMPANY") return false;
   const group = tile.payload?.group;
   if (group === "UTIL") return false;
-  if (group === "RR") return true; // railroads produce LC_MEDIUM
+  if (group === "RR") return true; // RR -> LC_MEDIUM
   const qk = (tile.payload?.qkind || "").toUpperCase();
   return qk === "LC" || qk === "SD" || qk === "BH";
 }
@@ -328,8 +329,6 @@ async function refresh(){
   ensurePawnOverlay(); ensureHudOverlay(); buildBoard(); updateHud();
   if (!INIT_DONE){ const side=sideForIndex(STATE.pos); snapStageRotationForSide(side); INIT_DONE=true; }
   placePawnAtIndex(STATE.pos, true);
-
-  // Render outcome centered and persistent
   renderOutcome(STATE.last_outcome);
 }
 function setPawnVisible(show){ const pawn = el("#pawn"); if (!pawn) return; pawn.style.opacity = show ? "1":"0"; }
@@ -338,36 +337,31 @@ async function walkPath(path, stepMs){ if (!Array.isArray(path)||path.length===0
 function findIndexByType(ttype){ for (let i=0;i<BOARD.length;i++){ if (BOARD[i]?.ttype===ttype) return i; } return -1; }
 
 async function doRoll(){
-  // Prevent rolling if an outcome is on screen
+  // Block rolling if outcome is open
   const box = el("#outcome");
   if (box && !box.classList.contains("hidden")) return;
 
   const btn = el("#btn-roll"); btn.disabled = true; btn.classList.add("disabled");
 
-  // 1) Request a roll
   const res = await fetch("/roll",{method:"POST"}); const data = await res.json();
   if (data.skipped){ await refresh(); btn.disabled=false; btn.classList.remove("disabled"); return; }
 
   const landedGotoJail = (BOARD[data.pos]?.ttype==="GOTO_JAIL");
   const jailIdx = findIndexByType("JAIL");
 
-  // 2) Dice animation -> brief hold -> pawn walk
   await spinTwoDiceFor(750, data.d1, data.d2);
   await new Promise(r=>setTimeout(r,450));
   await walkPath(data.path, 260);
   el("#dice-overlay").classList.add("hidden");
 
-  // 3) Hide pawn during rotation and rotate board
   setPawnVisible(false);
   await rotateForPathUsingDisplaySide(data.pos_prev, data.path);
   placePawnAtIndex(data.pos, true);
   setPawnVisible(true);
 
-  // 4) Decide locally if a question is expected on the landing tile
   const landingTile = BOARD[data.pos];
   const expectQuestion = willTileProduceQuestion(landingTile);
 
-  // 5) If yes, show the loader now, and kick off prefetch
   if (expectQuestion){
     showOverlay("Preparing question","This will only take a moment.");
     fetch("/prefetch", {
@@ -376,26 +370,22 @@ async function doRoll(){
     }).catch(()=>{});
   }
 
-  // 6) Resolve on server
   const res2 = await fetch("/resolve",{method:"POST"}); const rdata = await res2.json();
 
-  // 7) Handle go-to-jail rotation visual after resolve
   if (landedGotoJail && jailIdx>=0){
     await rotateStageCCW90Center(); await rotateStageCCW90Center();
     placePawnAtIndex(jailIdx, true);
   }
 
-  // 8) Close loader only if we showed it
   if (expectQuestion) hideOverlay();
 
-  // 9) Open modal or just refresh HUD — outcome will render centered and block roll
   if (rdata.pending) openPending(rdata.pending);
   else await refresh();
 
   btn.disabled = false; btn.classList.remove("disabled");
 }
 
-/* ---------- Modal rendering (uniform & compact) ---------- */
+/* ---------- Modal rendering (question dialog) ---------- */
 function diffFromType(p){
   if (!p || !p.type) return null;
   const t = p.type.toUpperCase();
@@ -417,8 +407,13 @@ function openPending(p){
   const title = el("#p-title");
   const body = el("#p-body");
   const ta = el("#p-answer");
-  ta.value = "";
+  const submitBtn = el("#p-submit");
 
+  // Reset state
+  ta.value = "";
+  submitBtn.disabled = true;
+
+  // Build content
   const diff = diffFromType(p);
 
   if (p.type === "SYS_DESIGN"){
@@ -456,17 +451,31 @@ function openPending(p){
     `;
   }
 
-  dlg.showModal();
+  // enforce non-empty answer before enabling submit
+  function validateAnswer(){
+    const ok = (ta.value || "").trim().length > 0;
+    submitBtn.disabled = !ok;
+  }
+  ta.removeEventListener("input", validateAnswer); // avoid duplicates if reopened
+  ta.addEventListener("input", validateAnswer);
+  validateAnswer();
 
-  el("#p-submit").textContent = "Submit";
-  el("#p-submit").disabled = false;
+  // show as modal and prevent ESC close
+  try { dlg.showModal(); } catch {}
+  dlg.addEventListener("cancel", (e) => { e.preventDefault(); });
 
-  el("#p-submit").onclick = async (e) => {
+  // submit handler
+  submitBtn.onclick = async (e) => {
     e.preventDefault();
-    const text = (el("#p-answer").value || "");
+    const text = (ta.value || "").trim();
+    if (!text) return;
 
     showOverlay("Grading answer","Scoring your response.");
-    const res = await fetch("/submit_answer", { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({text}) });
+    const res = await fetch("/submit_answer", {
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({text})
+    });
     const data = await res.json();
 
     dlg.close();
@@ -474,16 +483,21 @@ function openPending(p){
     renderOutcome(data.last_outcome);
     hideOverlay();
   };
-
-  const form = el("#pending-form");
-  form.querySelector('button[value="cancel"]').textContent = "Cancel";
-  form.onsubmit = (e) => { /* default close */ };
 }
 
 /* ---------- Boot ---------- */
 document.addEventListener("DOMContentLoaded", async () => {
-  // add an invisible backdrop for the outcome modal to block clicks
-  ensureOutcomeBackdrop();
+  // backdrop for centered outcome
+  (function ensureOutcomeBackdropAtBoot(){
+    let bd = el("#outcome-backdrop");
+    if (!bd){
+      bd = document.createElement("div");
+      bd.id = "outcome-backdrop";
+      bd.className = "hidden";
+      const wrap = el("#board-wrap");
+      wrap.appendChild(bd);
+    }
+  })();
 
   ensurePawnOverlay(); ensureHudOverlay(); initDice();
   el("#btn-new").onclick = async () => { ROT_DEG=0; INIT_DONE=false; OUTCOME_DISMISSED_SIG=null; await fetch("/new",{method:"POST"}); await refresh(); };
