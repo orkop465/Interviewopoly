@@ -142,13 +142,53 @@ main{
   pointer-events:none;
 }
 
+/* Ownership + development pips */
+.own-chip{
+  position:absolute;
+  top:calc(4px * var(--ui-scale));
+  left:calc(4px * var(--ui-scale));
+  width:calc(10px * var(--ui-scale));
+  height:calc(10px * var(--ui-scale));
+  border-radius:50%;
+  background:#16a34a; /* green */
+  border:1px solid rgba(0,0,0,.35);
+  box-shadow:0 0 calc(2px * var(--ui-scale)) rgba(0,0,0,.4);
+}
+.dev-marks{
+  position:absolute;
+  right:calc(4px * var(--ui-scale));
+  bottom:calc(4px * var(--ui-scale));
+  display:flex; gap:calc(3px * var(--ui-scale));
+}
+.dev-marks .house{
+  width:calc(8px * var(--ui-scale));
+  height:calc(8px * var(--ui-scale));
+  background:#2563eb; /* blue pips for houses */
+  border:1px solid rgba(0,0,0,.4);
+  border-radius:calc(2px * var(--ui-scale));
+  box-shadow:0 0 calc(1px * var(--ui-scale)) rgba(0,0,0,.3);
+}
+.dev-marks .hotel{
+  width:calc(12px * var(--ui-scale));
+  height:calc(10px * var(--ui-scale));
+  background:#ef4444; /* red for hotel */
+  border:1px solid rgba(0,0,0,.45);
+  border-radius:calc(2px * var(--ui-scale));
+  display:grid; place-items:center;
+  font-weight:800;
+  font-size:calc(7px * var(--ui-scale));
+  color:#fff;
+  box-shadow:0 0 calc(1px * var(--ui-scale)) rgba(0,0,0,.35);
+}
+
+/* Dice overlay */
 .dice-overlay{
   position:absolute;inset:0;display:grid;place-items:center;background:rgba(0,0,0,.15);
   z-index:60
 }
 .dice-overlay.hidden{display:none}
 
-/* FIXED-SIZE DICE (original look) */
+/* FIXED-SIZE DICE */
 .dice{
   width:72px;
   height:72px;
@@ -179,7 +219,6 @@ main{
   border:1px solid #2a3342;
   z-index:85;
 
-  /* bigger type */
   font-size:calc(16px * var(--ui-scale));
   line-height:1.35;
   box-shadow:0 calc(18px * var(--ui-scale)) calc(60px * var(--ui-scale)) rgba(0,0,0,.55), inset 0 0 0 1px rgba(255,255,255,.04);

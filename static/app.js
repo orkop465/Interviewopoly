@@ -2,7 +2,7 @@
 const GROUP_COLORS = {
   BROWN:"#8B4513", LIGHT_BLUE:"#ADD8E6", PINK:"#FF69B4", ORANGE:"#FFA500",
   RED:"#D32F2F", YELLOW:"#F7D154", GREEN:"#2E7D32", DARK_BLUE:"#0D47A1",
-  RR:"#6B7280", UTIL:null
+  RR:"#6B7280", UTIL:null // RR bar readable
 };
 const BOARD_BLUE = "#CFEFE9";
 const el = (sel) => document.querySelector(sel);
@@ -12,8 +12,12 @@ let STATE = null;
 let ROT_DEG = 0;
 let INIT_DONE = false;
 
-/* track last dismissed outcome to avoid immediate re-show after refresh */
+/* track last dismissed outcome so it doesn't bounce back after refresh */
 let OUTCOME_DISMISSED_SIG = null;
+
+/* fast lookup for ownership and houses */
+let OWNED_SET = new Set();
+let HOUSES_MAP = Object.create(null);
 
 /* ---------- Board helpers ---------- */
 function idx_to_rc(i){
@@ -141,10 +145,51 @@ function hideOverlay(){
 }
 
 /* ---------- Build board ---------- */
-function buildBoard(){
-  const board = el("#board");
+function clearBoardKeep(board){
   const keep = new Set([".center-logo", "#dice-overlay", "#loading"]);
   [...board.children].forEach(ch => { if (![...keep].some(s => ch.matches(s))) ch.remove(); });
+}
+function addOwnedAndDevIndicators(inner, tile){
+  const name = tile.name;
+  const isOwned = OWNED_SET.has(name);
+
+  if (!isOwned && !isProp(tile)) return; // only mark RR/UTIL when owned; for color props we may still show houses if any
+
+  // Owned chip for any owned company tile
+  if (tile.ttype === "COMPANY" && isOwned){
+    const chip = document.createElement("div");
+    chip.className = "own-chip";
+    chip.title = "Owned";
+    inner.appendChild(chip);
+  }
+
+  // Development marks for color properties
+  if (isProp(tile)){
+    const count = HOUSES_MAP[name] || 0;
+    if (count > 0){
+      const wrap = document.createElement("div");
+      wrap.className = "dev-marks";
+      if (count >= 5){
+        const hotel = document.createElement("div");
+        hotel.className = "hotel";
+        hotel.title = "Hotel";
+        hotel.textContent = "H";
+        wrap.appendChild(hotel);
+      } else {
+        for (let i=0; i<count; i++){
+          const pip = document.createElement("div");
+          pip.className = "house";
+          pip.title = "House";
+          wrap.appendChild(pip);
+        }
+      }
+      inner.appendChild(wrap);
+    }
+  }
+}
+function buildBoard(){
+  const board = el("#board");
+  clearBoardKeep(board);
 
   BOARD.forEach((t,i) => {
     const [r,c] = idx_to_rc(i);
@@ -174,6 +219,9 @@ function buildBoard(){
       badge.textContent = qk==="LC"?"LC": qk==="SD"?"SD": qk==="BH"?"BH":"";
       inner.appendChild(badge);
     }
+
+    // NEW: ownership and dev markers
+    addOwnedAndDevIndicators(inner, t);
 
     cell.appendChild(inner); board.appendChild(cell);
   });
@@ -326,9 +374,15 @@ function willTileProduceQuestion(tile){
 async function refresh(){
   const res = await fetch("/state"); const data = await res.json();
   STATE = data; BOARD = data.board;
+
+  // fast lookup caches
+  OWNED_SET = new Set((STATE.owned||[]).map(o=>o.name));
+  HOUSES_MAP = Object.assign({}, STATE.houses||{});
+
   ensurePawnOverlay(); ensureHudOverlay(); buildBoard(); updateHud();
   if (!INIT_DONE){ const side=sideForIndex(STATE.pos); snapStageRotationForSide(side); INIT_DONE=true; }
   placePawnAtIndex(STATE.pos, true);
+
   renderOutcome(STATE.last_outcome);
 }
 function setPawnVisible(show){ const pawn = el("#pawn"); if (!pawn) return; pawn.style.opacity = show ? "1":"0"; }
@@ -456,8 +510,7 @@ function openPending(p){
     const ok = (ta.value || "").trim().length > 0;
     submitBtn.disabled = !ok;
   }
-  ta.removeEventListener("input", validateAnswer); // avoid duplicates if reopened
-  ta.addEventListener("input", validateAnswer);
+  ta.addEventListener("input", validateAnswer, { once:false });
   validateAnswer();
 
   // show as modal and prevent ESC close
@@ -487,7 +540,7 @@ function openPending(p){
 
 /* ---------- Boot ---------- */
 document.addEventListener("DOMContentLoaded", async () => {
-  // backdrop for centered outcome
+  // ensure outcome backdrop exists
   (function ensureOutcomeBackdropAtBoot(){
     let bd = el("#outcome-backdrop");
     if (!bd){

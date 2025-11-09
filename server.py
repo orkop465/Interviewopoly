@@ -23,6 +23,11 @@ def _debug(msg: str):
 
 FORCED_ROLLS = deque([
     (2, 2),
+    (4, 4),
+    (6, 2),
+    (2, 6),
+    (4, 4),
+    (4, 4),
 ])
 
 
