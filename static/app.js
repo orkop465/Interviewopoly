@@ -2,7 +2,7 @@
 const GROUP_COLORS = {
   BROWN:"#8B4513", LIGHT_BLUE:"#ADD8E6", PINK:"#FF69B4", ORANGE:"#FFA500",
   RED:"#D32F2F", YELLOW:"#F7D154", GREEN:"#2E7D32", DARK_BLUE:"#0D47A1",
-  RR:"#000000", UTIL:null
+  RR:"#6B7280", UTIL:null // RR bar color adjusted for readability
 };
 const BOARD_BLUE = "#CFEFE9";
 const el = (sel) => document.querySelector(sel);
@@ -11,6 +11,9 @@ let BOARD = [];
 let STATE = null;
 let ROT_DEG = 0;
 let INIT_DONE = false;
+
+/* Keep track of a dismissed outcome so it doesn't pop right back after refresh */
+let OUTCOME_DISMISSED_SIG = null;
 
 /* ---------- Board helpers ---------- */
 function idx_to_rc(i){
@@ -29,7 +32,7 @@ function isProp(t){ return t.ttype==="COMPANY" && !isRR(t) && !isUTIL(t); }
 function tileFillStripe(t){
   if (t.ttype==="CHANCE"||t.ttype==="COMMUNITY") return [BOARD_BLUE,null,true];
   if (isProp(t)) return ["#FFFFFF", GROUP_COLORS[t.payload.group], false];
-  if (isRR(t)) return ["#FFFFFF","#6B7280",false];
+  if (isRR(t)) return ["#FFFFFF", GROUP_COLORS["RR"], false];
   if (isUTIL(t)) return ["#FFFFFF",null,false];
   return ["#FFFFFF",null,false];
 }
@@ -207,18 +210,82 @@ async function rotateForPathUsingDisplaySide(startIndex, path){
   for (let i=1;i<seq.length;i++){ const target=seq[i]; if (isCorner(target)) continue; const tSide=sideForIndex(target); if (tSide!==displaySide()) await rotateToMatchSide(tSide); }
 }
 
+/* ---------- Outcome modal (centered) ---------- */
+function ensureOutcomeBackdrop(){
+  let bd = el("#outcome-backdrop");
+  if (!bd){
+    bd = document.createElement("div");
+    bd.id = "outcome-backdrop";
+    bd.className = "hidden";
+    const wrap = el("#board-wrap");
+    wrap.appendChild(bd);
+  }
+  return bd;
+}
+function outcomeSig(o){
+  if (!o) return null;
+  return [o.kind||"", o.title||"", o.feedback||""].join("|");
+}
+function setRollEnabled(enabled){
+  const btn = el("#btn-roll");
+  if (!btn) return;
+  btn.disabled = !enabled;
+  btn.classList.toggle("disabled", !enabled);
+}
+function renderOutcome(outc){
+  const box = el("#outcome");
+  const backdrop = ensureOutcomeBackdrop();
+
+  // nothing to show
+  if (!outc){
+    box.classList.add("hidden");
+    backdrop.classList.add("hidden");
+    setRollEnabled(true);
+    return;
+  }
+
+  // If user dismissed this exact message already, keep it hidden until a new one arrives
+  const sig = outcomeSig(outc);
+  if (OUTCOME_DISMISSED_SIG && OUTCOME_DISMISSED_SIG === sig){
+    box.classList.add("hidden");
+    backdrop.classList.add("hidden");
+    setRollEnabled(true);
+    return;
+  }
+
+  // Build inner HTML with Close button
+  box.className = "outcome"; // reset plus base class
+  if (outc.kind) box.classList.add(outc.kind);
+  const title = outc.title || "";
+  const feedback = outc.feedback || "";
+  box.innerHTML = `
+    <strong>${title}</strong>
+    ${feedback ? `<div class="subtitle">${feedback}</div>` : ""}
+    <div class="actions"><button type="button" id="outcome-close">Close</button></div>
+  `;
+
+  // Show and block interactions beneath
+  box.classList.remove("hidden");
+  backdrop.classList.remove("hidden");
+  setRollEnabled(false);
+
+  const closeBtn = el("#outcome-close");
+  if (closeBtn){
+    closeBtn.onclick = () => {
+      OUTCOME_DISMISSED_SIG = sig;
+      box.classList.add("hidden");
+      backdrop.classList.add("hidden");
+      setRollEnabled(true);
+    };
+  }
+}
+
 /* ---------- HUD / outcome ---------- */
 function updateHud(){
   // Cash removed from HUD
   el("#m-offers").textContent = STATE.offers;
   el("#m-turns").textContent = STATE.turns;
   el("#m-owned").textContent = STATE.owned.length;
-}
-function renderOutcome(outc){
-  const box = el("#outcome"); if (!outc){ box.classList.add("hidden"); return; }
-  box.className="outcome"; if (outc.kind) box.classList.add(outc.kind);
-  let html = `<strong>${outc.title||""}</strong>`; if (outc.feedback) html += `<div class="subtitle">${outc.feedback}</div>`;
-  box.innerHTML = html; box.classList.remove("hidden");
 }
 
 /* ---------- Dice ---------- */
@@ -236,11 +303,22 @@ function diceSetFace(elem, face){
 function spinTwoDiceFor(ms, face1, face2){
   return new Promise((resolve)=>{
     const overlay=el("#dice-overlay"), d1=el("#die1"), d2=el("#die2");
-    updateDiceCounterRotation(); overlay.classList.remove("hidden");
+    overlay.classList.remove("hidden");
     const tick=()=>1+Math.floor(Math.random()*6);
     const id=setInterval(()=>{ diceSetFace(d1,tick()); diceSetFace(d2,tick()); },90);
     setTimeout(()=>{ clearInterval(id); diceSetFace(d1,face1); diceSetFace(d2,face2); resolve(); },ms);
   });
+}
+
+/* ---------- Question tile expectation (RR included) ---------- */
+function willTileProduceQuestion(tile){
+  if (!tile) return false;
+  if (tile.ttype !== "COMPANY") return false;
+  const group = tile.payload?.group;
+  if (group === "UTIL") return false;
+  if (group === "RR") return true; // railroads produce LC_MEDIUM
+  const qk = (tile.payload?.qkind || "").toUpperCase();
+  return qk === "LC" || qk === "SD" || qk === "BH";
 }
 
 /* ---------- Core flow ---------- */
@@ -248,31 +326,27 @@ async function refresh(){
   const res = await fetch("/state"); const data = await res.json();
   STATE = data; BOARD = data.board;
   ensurePawnOverlay(); ensureHudOverlay(); buildBoard(); updateHud();
-  if (!INIT_DONE){ const side=sideForIndex(STATE.pos); snapStageRotationForSide(side); INIT_DONE=true; } else { updateDiceCounterRotation(); }
-  setPawnVisible(true); placePawnAtIndex(STATE.pos, true); renderOutcome(STATE.last_outcome);
+  if (!INIT_DONE){ const side=sideForIndex(STATE.pos); snapStageRotationForSide(side); INIT_DONE=true; }
+  placePawnAtIndex(STATE.pos, true);
+
+  // Render outcome centered and persistent
+  renderOutcome(STATE.last_outcome);
 }
 function setPawnVisible(show){ const pawn = el("#pawn"); if (!pawn) return; pawn.style.opacity = show ? "1":"0"; }
 function waitPawn(stepMs=260){ return waitTransition(el("#pawn"), stepMs); }
 async function walkPath(path, stepMs){ if (!Array.isArray(path)||path.length===0) return; for(let i=0;i<path.length;i++){ placePawnAtIndex(path[i], false); await waitPawn(stepMs); } }
 function findIndexByType(ttype){ for (let i=0;i<BOARD.length;i++){ if (BOARD[i]?.ttype===ttype) return i; } return -1; }
 
-function willTileProduceQuestion(tile){
-  if (!tile) return false;
-  if (tile.ttype !== "COMPANY") return false;
-  const group = tile.payload?.group;
-  if (group === "UTIL") return false;
-  if (group === "RR") return true;
-  const qk = (tile.payload?.qkind || "").toUpperCase();
-  return qk === "LC" || qk === "SD" || qk === "BH";
-}
-
-
 async function doRoll(){
-  const btn = el("#btn-roll"); btn.disabled = true;
+  // Prevent rolling if an outcome is on screen
+  const box = el("#outcome");
+  if (box && !box.classList.contains("hidden")) return;
+
+  const btn = el("#btn-roll"); btn.disabled = true; btn.classList.add("disabled");
 
   // 1) Request a roll
   const res = await fetch("/roll",{method:"POST"}); const data = await res.json();
-  if (data.skipped){ await refresh(); btn.disabled=false; return; }
+  if (data.skipped){ await refresh(); btn.disabled=false; btn.classList.remove("disabled"); return; }
 
   const landedGotoJail = (BOARD[data.pos]?.ttype==="GOTO_JAIL");
   const jailIdx = findIndexByType("JAIL");
@@ -314,11 +388,11 @@ async function doRoll(){
   // 8) Close loader only if we showed it
   if (expectQuestion) hideOverlay();
 
-  // 9) Open modal or just refresh HUD
+  // 9) Open modal or just refresh HUD — outcome will render centered and block roll
   if (rdata.pending) openPending(rdata.pending);
   else await refresh();
 
-  btn.disabled = false;
+  btn.disabled = false; btn.classList.remove("disabled");
 }
 
 /* ---------- Modal rendering (uniform & compact) ---------- */
@@ -408,9 +482,12 @@ function openPending(p){
 
 /* ---------- Boot ---------- */
 document.addEventListener("DOMContentLoaded", async () => {
+  // add an invisible backdrop for the outcome modal to block clicks
+  ensureOutcomeBackdrop();
+
   ensurePawnOverlay(); ensureHudOverlay(); initDice();
-  el("#btn-new").onclick = async () => { ROT_DEG=0; INIT_DONE=false; await fetch("/new",{method:"POST"}); await refresh(); };
+  el("#btn-new").onclick = async () => { ROT_DEG=0; INIT_DONE=false; OUTCOME_DISMISSED_SIG=null; await fetch("/new",{method:"POST"}); await refresh(); };
   el("#btn-roll").onclick = doRoll;
-  await refresh(); updateDiceCounterRotation();
+  await refresh();
   window.addEventListener("resize", () => { if (STATE) placePawnAtIndex(STATE.pos, true); });
 });

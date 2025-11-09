@@ -51,16 +51,9 @@ main{
   max-width:min(1200px, 98vw);
   margin:0 auto;
   padding:6px 12px 6px;
-  display:block;
-  overflow:hidden;
-}
-
-#layout{
   display:grid;
-  grid-template-columns: 280px 1fr;
-  gap:12px;
-  width:100%;
-  height:100%;
+  place-items:center;
+  overflow:hidden;
 }
 
 #board-wrap{
@@ -72,48 +65,6 @@ main{
   overflow:visible;
 }
 
-/* Sidebar */
-#owned-sidebar{
-  height:100%;
-  overflow:auto;
-  background:#0f1520;
-  border:1px solid #232a35;
-  border-radius:12px;
-  padding:10px;
-}
-#owned-sidebar .sidebar-header{ margin-bottom:8px; }
-#owned-sidebar .title{ font-weight:800; letter-spacing:.2px; font-size:14px; }
-#owned-sidebar .subtitle{ color:#99a3af; font-size:12px; }
-
-.group{
-  border:1px solid #232a35;
-  border-radius:10px;
-  background:#0e141b;
-  margin:8px 0;
-  overflow:hidden;
-}
-.group-header{
-  display:flex; align-items:center; justify-content:space-between;
-  gap:8px; padding:8px 10px; border-bottom:1px solid #232a35;
-}
-.group-chip{ display:flex; align-items:center; gap:8px; font-weight:700; }
-.color-swatch{ width:12px; height:12px; border-radius:3px; border:1px solid rgba(255,255,255,.18); }
-.group-count{ color:#99a3af; font-size:12px; }
-.group-list{ list-style:none; margin:0; padding:8px; display:flex; flex-direction:column; gap:6px; }
-.prop{
-  display:flex; align-items:center; justify-content:space-between; gap:8px;
-  padding:6px 8px; border-radius:8px; background:#0c131f; border:1px solid transparent;
-}
-.prop.owned{ border-color:rgba(46,125,50,.35) }
-.prop-name{ overflow:hidden; white-space:nowrap; text-overflow:ellipsis; max-width:170px; }
-.badges{ display:flex; align-items:center; gap:6px; }
-.badge{ font-size:11px; padding:2px 6px; border-radius:999px; border:1px solid transparent; background:#0f172a; }
-.badge.own{ background:rgba(46,125,50,.12); border-color:rgba(46,125,50,.35); color:#9be09b; }
-.badge.miss{ background:rgba(107,114,128,.12); border-color:rgba(107,114,128,.35); color:#c7cbd3; }
-.badge.house{ background:rgba(37,99,235,.12); border-color:rgba(37,99,235,.35); color:#c7dbff; }
-.badge.hotel{ background:rgba(185,28,28,.12); border-color:rgba(185,28,28,.35); color:#ffb3b3; }
-
-/* board and tiles */
 .stage{
   position:relative;
   width:var(--stage-size);
@@ -214,20 +165,57 @@ main{
   background:#111;
 }
 
-/* Outcome overlays inside board area */
+/* Centered outcome modal inside the board */
 .outcome{
   position:absolute;
-  left:12px; bottom:12px;
-  max-width:calc(var(--stage-size) - 24px);
-  padding:10px 12px;
-  border-radius:10px;
-  background:#141a22;border:1px solid #232a35;
-  z-index:65;
+  left:50%;
+  top:50%;
+  transform:translate(-50%,-50%);
+  max-width:calc(var(--stage-size) * 0.86);
+  width:calc(var(--stage-size) * 0.86);
+  padding:calc(14px * var(--ui-scale)) calc(16px * var(--ui-scale));
+  border-radius:calc(14px * var(--ui-scale));
+  background:#0f1520;
+  border:1px solid #2a3342;
+  z-index:85;
+
+  /* bigger type */
+  font-size:calc(16px * var(--ui-scale));
+  line-height:1.35;
+  box-shadow:0 calc(18px * var(--ui-scale)) calc(60px * var(--ui-scale)) rgba(0,0,0,.55), inset 0 0 0 1px rgba(255,255,255,.04);
 }
+.outcome.hidden{display:none}
+.outcome strong{display:block; font-size:calc(22px * var(--ui-scale)); margin-bottom:calc(6px * var(--ui-scale));}
+.outcome .subtitle{opacity:.9; color:#c7d0db}
+
 .outcome.success{border-color:#238636}
 .outcome.error{border-color:#f85149}
 .outcome.warning{border-color:#d29922}
-.hidden{display:none}
+.outcome.info{border-color:#6e7681}
+
+/* outcome overlay backdrop that blocks clicks to the board and buttons */
+#outcome-backdrop{
+  position:absolute; inset:0;
+  background:rgba(0,0,0,.28);
+  z-index:80;
+}
+#outcome-backdrop.hidden{display:none}
+
+/* Close button row (bottom-right inside the modal) */
+.outcome .actions{
+  display:flex;
+  justify-content:flex-end;
+  margin-top:calc(12px * var(--ui-scale));
+}
+.outcome .actions button{
+  background:#1f6feb;
+  border:1px solid #2f81f7;
+  color:#fff;
+  border-radius:calc(8px * var(--ui-scale));
+  padding:calc(8px * var(--ui-scale)) calc(12px * var(--ui-scale));
+  font-weight:700;
+  cursor:pointer;
+}
 
 /* Legacy loading chip */
 #loading{
