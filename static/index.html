@@ -10,7 +10,7 @@
   <header id="page-header">
     <h1>Interviewopoly</h1>
     <div class="hud">
-      <div class="metric"><span>Cash</span><strong id="m-cash">$0</strong></div>
+      <!-- Cash removed from HUD -->
       <div class="metric"><span>Offer Points</span><strong id="m-offers">0</strong></div>
       <div class="metric"><span>Turns Left</span><strong id="m-turns">0</strong></div>
       <div class="metric"><span>Owned</span><strong id="m-owned">0</strong></div>
@@ -122,11 +122,9 @@
         root.style.setProperty('--stage-size', size + 'px');
         root.style.setProperty('--ui-scale', String(scale));
 
-        // hard lock scroll just in case
         document.documentElement.style.overflow = 'hidden';
         document.body.style.overflow = 'hidden';
 
-        // DEBUG: log once per call so we can see values in DevTools
         console.log('[resizeBoard]',
           { vw, vh, headerH, padX: pad.x, padY: pad.y, availW, availH, size, scale });
       }

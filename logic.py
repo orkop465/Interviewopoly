@@ -6,6 +6,7 @@ from typing import Dict, Any, List
 # Load .env automatically for every teammate without IDE config
 try:
     from dotenv import load_dotenv
+
     load_dotenv(override=False)
     _DOTENV_LOADED = True
 except Exception:
@@ -14,6 +15,7 @@ except Exception:
 # Optional OpenAI generation
 try:
     from openai import OpenAI
+
     _HAS_OPENAI_LIB = True
 except Exception:
     _HAS_OPENAI_LIB = False
@@ -21,12 +23,10 @@ except Exception:
 OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
-# Default behavior:
-# - If USE_LLM is explicitly set, honor it.
-# - Else if an API key is present, use LLM by default.
-# - Else fallback to local.
+
 def _parse_bool(s: str) -> bool:
     return str(s).strip().lower() in ("1", "true", "yes", "y", "on")
+
 
 if os.getenv("USE_LLM") is not None:
     USE_LLM = _parse_bool(os.getenv("USE_LLM"))
@@ -35,8 +35,10 @@ else:
 
 _LAST_LLM_ERROR: str = ""
 
+
 def _debug(msg: str):
     print(f"[logic] {msg}")
+
 
 def _client_status_detail() -> Dict[str, Any]:
     return {
@@ -47,6 +49,7 @@ def _client_status_detail() -> Dict[str, Any]:
         "model": OPENAI_MODEL,
         "last_llm_error": _LAST_LLM_ERROR,
     }
+
 
 def _maybe_client():
     global _LAST_LLM_ERROR
@@ -72,6 +75,7 @@ def _maybe_client():
         _debug(f"Failed to create OpenAI client, using local judging. Reason: {_LAST_LLM_ERROR}")
         return None
 
+
 def llm_status() -> Dict[str, Any]:
     st = {
         **_client_status_detail(),
@@ -80,22 +84,26 @@ def llm_status() -> Dict[str, Any]:
     _debug(f"llm_status: {st}")
     return st
 
+
 # ---------- Rewards ----------
 LC_REWARDS: Dict[str, Dict[str, int]] = {
-    "LC_EASY": {"pass_cash": 80, "pass_offers": 2, "fail_cash": 0},
-    "LC_MED": {"pass_cash": 120, "pass_offers": 3, "fail_cash": 0},
-    "LC_HARD": {"pass_cash": 180, "pass_offers": 4, "fail_cash": 0},
+    "LC_EASY": {"pass_offers": 2},
+    "LC_MED": {"pass_offers": 3},
+    "LC_HARD": {"pass_offers": 4},
 }
+
 
 # ---------- Utility helpers ----------
 def _clean(s: str) -> str:
     return (s or "").strip().replace("\r", "")
+
 
 def _difficulty_norm(d: str) -> str:
     d = (d or "MEDIUM").upper()
     if d in ("EASY", "MEDIUM", "HARD"):
         return d
     return "MEDIUM"
+
 
 def _safe_bool_correct(obj: Dict[str, Any], default: bool = False) -> bool:
     if isinstance(obj, dict):
@@ -111,9 +119,9 @@ def _safe_bool_correct(obj: Dict[str, Any], default: bool = False) -> bool:
             return False
     return default
 
+
 # ---------- LC generation ----------
 def generate_lc_question(difficulty: str) -> Dict[str, Any]:
-    """Return short, structured question dict with keys: title, question, examples, hints."""
     from prompts import LC_QUESTION_PROMPT
     diff = _difficulty_norm(difficulty)
     client = _maybe_client()
@@ -131,7 +139,6 @@ def generate_lc_question(difficulty: str) -> Dict[str, Any]:
             )
             import json
             obj = json.loads(resp.choices[0].message.content or "{}")
-            # Ensure mandatory fields exist and are strings/arrays
             title = _clean(str(obj.get("title", "")))[:45]
             question = _clean(str(obj.get("question", "")))[:240]
             examples = obj.get("examples") or []
@@ -185,29 +192,10 @@ def generate_lc_question(difficulty: str) -> Dict[str, Any]:
             },
         ],
     }
-    return random.choice(bank[diff])
+    return random.choice(bank[_difficulty_norm(difficulty)])
+
 
 # ---------- LC scoring ----------
-def _pseudo_tokens_present(text: str) -> int:
-    lower = (text or "").lower()
-    cues = [
-        "for ", "while ", "if ", "else", "return", "initialize", "set ", "append", "pop", "push",
-        "[i]", "i+1", "j+1", "map[", "dict", "hash", "set", "queue", "stack", "two pointer", "sliding window",
-        "prefix", "visited", "adjacency", "heap", "priority queue"
-    ]
-    return sum(1 for c in cues if c in lower)
-
-def _hint_hits(question: Dict[str, Any], text: str) -> int:
-    lower = (text or "").lower()
-    hints = question.get("hints") or []
-    hits = 0
-    for h in hints:
-        for tok in str(h).lower().replace(",", " ").split():
-            if len(tok) >= 3 and tok in lower:
-                hits += 1
-                break
-    return hits
-
 def score_lc_answer(question: Dict[str, Any], text: str) -> Dict[str, Any]:
     client = _maybe_client()
     if client:
@@ -235,15 +223,13 @@ def score_lc_answer(question: Dict[str, Any], text: str) -> Dict[str, Any]:
 
     _debug("LC scoring locally")
     words = len((text or "").split())
-    pseudo_score = _pseudo_tokens_present(text)
-    hint_score = _hint_hits(question, text)
-    correct = (words >= 20 and (pseudo_score >= 2 or hint_score >= 1))
-    fb = (
-        "Evaluated locally. Pseudocode is enough. Outline clear steps and name the structures."
-        if not correct else
-        "Good. Clear steps and appropriate data structures."
-    )
+    pseudo_score = sum(
+        1 for c in ("set", "map", "hash", "window", "prefix", "queue", "stack") if c in (text or "").lower())
+    correct = (words >= 20 and pseudo_score >= 1)
+    fb = ("Evaluated locally. Outline clear steps and name the structures."
+          if not correct else "Good. Clear steps and appropriate data structures.")
     return {"correct": bool(correct), "feedback": fb, "judge_source": "local"}
+
 
 # ---------- SD generation ----------
 def generate_sd_prompt(difficulty: str = "MEDIUM") -> Dict[str, Any]:
@@ -270,7 +256,7 @@ def generate_sd_prompt(difficulty: str = "MEDIUM") -> Dict[str, Any]:
             obj = json.loads(resp.choices[0].message.content or "{}")
             title = _clean(str(obj.get("title", "")))[:45]
             prompt = _clean(str(obj.get("prompt", "")))[:240]
-            rubric = [ _clean(str(x))[:80] for x in (obj.get("rubric") or []) ][:7]
+            rubric = [_clean(str(x))[:80] for x in (obj.get("rubric") or [])][:7]
             return {"title": title, "prompt": prompt, "rubric": rubric}
         except Exception as e:
             _debug(f"OpenAI SD generation failed: {type(e).__name__}: {e}")
@@ -318,6 +304,7 @@ def generate_sd_prompt(difficulty: str = "MEDIUM") -> Dict[str, Any]:
         ],
     }
 
+
 # ---------- SD scoring ----------
 def score_sd_answer(rubric: List[str], text: str) -> Dict[str, Any]:
     client = _maybe_client()
@@ -351,6 +338,7 @@ def score_sd_answer(rubric: List[str], text: str) -> Dict[str, Any]:
     correct = hits >= needed
     fb = "Cover API, storage, scaling, consistency, and one tradeoff." if not correct else "Solid coverage of key items."
     return {"correct": bool(correct), "feedback": fb, "judge_source": "local"}
+
 
 # ---------- Behavioral generation ----------
 def generate_beh_prompt(difficulty: str = "MEDIUM") -> Dict[str, Any]:
@@ -398,6 +386,7 @@ def generate_beh_prompt(difficulty: str = "MEDIUM") -> Dict[str, Any]:
         "tip": "Own the outcome; quantify impact.",
     }
 
+
 # ---------- Behavioral scoring ----------
 def score_beh_answer(text: str) -> Dict[str, Any]:
     client = _maybe_client()
@@ -430,26 +419,17 @@ def score_beh_answer(text: str) -> Dict[str, Any]:
     fb = "Use STAR with specific actions and a measurable result." if not correct else "Clear STAR structure with a concrete outcome."
     return {"correct": bool(correct), "feedback": fb, "judge_source": "local"}
 
-# ---------- Cards and money ----------
+
+# ---------- Cards (no cash anywhere) ----------
 def generate_card() -> Dict[str, Any]:
     cards = [
         {"title": "Recruiter Referral", "text": "A friend forwards your resume to a hiring manager.",
-         "effect": {"offers": 1, "cash": 50}},
+         "effect": {"offers": 1}},
         {"title": "Resume Revamp", "text": "You improve your resume. Interview hit rate goes up.",
          "effect": {"offers": 1}},
-        {"title": "Mock Interview", "text": "Great feedback boosts your confidence.", "effect": {"cash": 40}},
-        {"title": "Tough Panel", "text": "It was rough. Learn and move on.", "effect": {"cash": -30}},
+        {"title": "Mock Interview", "text": "Great feedback boosts your confidence.", "effect": {"offers": 1}},
+        {"title": "Tough Panel", "text": "It was rough. Learn and move on.", "effect": {}},
         {"title": "Extra Practice", "text": "Daily leetcoding streak.", "effect": {"extra_roll": True}},
         {"title": "Rest Day", "text": "Take a breath.", "effect": {"turn_skip": True}},
     ]
     return random.choice(cards)
-
-def buy_company(state: Dict[str, Any], name: str, price: int) -> bool:
-    if state["cash"] >= price and not any(c["name"] == name for c in state["owned"]):
-        state["cash"] -= price
-        state["owned"].append({"name": name})
-        return True
-    return False
-
-def lap_income(state: Dict[str, Any]) -> int:
-    return 100

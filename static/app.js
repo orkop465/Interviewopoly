@@ -209,7 +209,7 @@ async function rotateForPathUsingDisplaySide(startIndex, path){
 
 /* ---------- HUD / outcome ---------- */
 function updateHud(){
-  el("#m-cash").textContent = "$"+STATE.cash;
+  // Cash removed from HUD
   el("#m-offers").textContent = STATE.offers;
   el("#m-turns").textContent = STATE.turns;
   el("#m-owned").textContent = STATE.owned.length;
@@ -291,7 +291,7 @@ async function doRoll(){
   const landingTile = BOARD[data.pos];
   const expectQuestion = willTileProduceQuestion(landingTile);
 
-  // 5) If yes, show the loader now (after dice + rotation), and kick off prefetch for warm cache
+  // 5) If yes, show the loader now, and kick off prefetch
   if (expectQuestion){
     showOverlay("Preparing question","This will only take a moment.");
     fetch("/prefetch", {
@@ -389,7 +389,6 @@ function openPending(p){
     e.preventDefault();
     const text = (el("#p-answer").value || "");
 
-    // Loader above modal while grading
     showOverlay("Grading answer","Scoring your response.");
     const res = await fetch("/submit_answer", { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({text}) });
     const data = await res.json();
