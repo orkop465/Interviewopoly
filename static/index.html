@@ -7,7 +7,7 @@
   <link rel="stylesheet" href="/static/style.css" />
 </head>
 <body>
-  <header>
+  <header id="page-header">
     <h1>Interviewopoly</h1>
     <div class="hud">
       <div class="metric"><span>Cash</span><strong id="m-cash">$0</strong></div>
@@ -21,11 +21,10 @@
     </div>
   </header>
 
-  <main>
+  <main id="page-main">
     <div id="board-wrap">
       <div class="stage">
         <div id="board" class="board">
-          <!-- center logo with graceful fallback -->
           <div class="center-logo">
             <img id="center-logo-img" src="/static/assets/logo_transparent.png" alt="" />
             <svg id="center-fallback" viewBox="0 0 1200 360" width="100%" height="100%" aria-hidden="true" style="position:absolute;inset:0;display:none">
@@ -46,7 +45,6 @@
             </svg>
           </div>
 
-          <!-- two-dice overlay -->
           <div class="dice-overlay hidden" id="dice-overlay">
             <div style="display:flex; gap:22px;">
               <div class="dice" id="die1">
@@ -60,23 +58,19 @@
             </div>
           </div>
 
-          <!-- loading HUD while preparing question -->
           <div id="loading" class="hidden">
             <div class="spinner"></div>
             <div>Preparing question…</div>
           </div>
 
-          <!-- pawn -->
           <div id="pawn" class="pawn"></div>
         </div>
       </div>
-    </div>
 
-    <!-- outcome box -->
-    <div id="outcome" class="outcome hidden"></div>
+      <div id="outcome" class="outcome hidden"></div>
+    </div>
   </main>
 
-  <!-- Pending modal -->
   <dialog id="pending-modal">
     <form method="dialog" id="pending-form">
       <h2 id="p-title">Pending</h2>
@@ -90,12 +84,57 @@
   </dialog>
 
   <script>
-    // fallback for center logo
+    // center logo fallback
     (function(){
       const img = document.getElementById('center-logo-img');
       const fb  = document.getElementById('center-fallback');
       img.addEventListener('error', () => { img.style.display='none'; fb.style.display='block'; });
       img.addEventListener('load', () => { fb.style.display='none'; });
+    })();
+
+    // responsive sizing + debug log
+    (function(){
+      const root = document.documentElement;
+      const header = document.getElementById('page-header');
+      const main = document.getElementById('page-main');
+
+      function innerPad(el){
+        const cs = getComputedStyle(el);
+        return {
+          x: parseFloat(cs.paddingLeft) + parseFloat(cs.paddingRight),
+          y: parseFloat(cs.paddingTop) + parseFloat(cs.paddingBottom)
+        };
+      }
+
+      function resizeBoard(){
+        const vw = Math.max(document.documentElement.clientWidth, window.innerWidth || 0);
+        const vh = Math.max(document.documentElement.clientHeight, window.innerHeight || 0);
+
+        const headerH = header.offsetHeight;
+        const pad = innerPad(main);
+
+        const availW = Math.max(320, vw - pad.x) - 2;
+        const availH = Math.max(320, vh - headerH - pad.y) - 2;
+
+        const size = Math.floor(Math.min(availW, availH));
+        const scale = size / 960;
+
+        root.style.setProperty('--stage-size', size + 'px');
+        root.style.setProperty('--ui-scale', String(scale));
+
+        // hard lock scroll just in case
+        document.documentElement.style.overflow = 'hidden';
+        document.body.style.overflow = 'hidden';
+
+        // DEBUG: log once per call so we can see values in DevTools
+        console.log('[resizeBoard]',
+          { vw, vh, headerH, padX: pad.x, padY: pad.y, availW, availH, size, scale });
+      }
+
+      window.addEventListener('resize', resizeBoard, { passive:true });
+      window.addEventListener('orientationchange', resizeBoard, { passive:true });
+      window.addEventListener('load', resizeBoard, { passive:true });
+      resizeBoard();
     })();
   </script>
   <script src="/static/app.js"></script>

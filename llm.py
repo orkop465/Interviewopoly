@@ -7,6 +7,7 @@ load_dotenv()
 USE_STUB = os.getenv("USE_LLM_STUB", "false").lower() == "true"
 OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-4o-mini").strip()
 
+
 def _safe_json(text: str, fallback: Dict[str, Any]) -> Dict[str, Any]:
     try:
         return json.loads(text)
@@ -20,6 +21,7 @@ def _safe_json(text: str, fallback: Dict[str, Any]) -> Dict[str, Any]:
             pass
     return fallback
 
+
 def _report_err(msg: str):
     try:
         import streamlit as st
@@ -27,6 +29,7 @@ def _report_err(msg: str):
     except Exception:
         pass
     print(f"[LLM ERROR] {msg}")
+
 
 def chat_json(system_prompt: str, user_prompt: str, fallback: Dict[str, Any]) -> Dict[str, Any]:
     if USE_STUB:
