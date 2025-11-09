@@ -18,6 +18,7 @@ Constraints:
 - Keep it readable and scannable.
 """
 
+
 # Score a candidate's LC approach (binary)
 LC_SCORE_PROMPT = """
 You are a pragmatic interviewer. Decide ONLY if the approach is correct.
@@ -36,18 +37,19 @@ SD_QUESTION_PROMPT = """
 You are a system design interviewer. Produce a SMALL, SCANNABLE prompt.
 
 Return STRICT JSON:
-{
+{{
   "title": "short name (max 45 chars)",
   "prompt": "2 sentences, plain text only (max 240 chars)",
   "rubric": [
     "6–7 bullet items, each <= 80 chars, covering API, storage, consistency, scaling, caching, bottlenecks, tradeoffs"
   ]
-}
+}}
 
 Topic: {topic}
 Difficulty: {difficulty} (EASY, MEDIUM, HARD)
 No code, no markdown. Keep it compact.
 """
+
 
 # Score system design answer (binary)
 SD_SCORE_PROMPT = """
@@ -67,16 +69,17 @@ BEHAVIORAL_QUESTION_PROMPT = """
 Create ONE behavioral prompt and a tiny STAR tip.
 
 Return STRICT JSON:
-{
+{{
   "title": "short theme (max 45 chars)",
   "prompt": "1 sentence (max 140 chars)",
   "tip": "very short STAR reminder (max 90 chars)"
-}
+}}
 
 Theme: {theme}
 Difficulty: {difficulty} (EASY, MEDIUM, HARD)
 Keep it compact and readable.
 """
+
 
 # Score behavioral STAR answer (binary)
 BEHAVIORAL_SCORE_PROMPT = """
