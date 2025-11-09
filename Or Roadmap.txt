@@ -1,0 +1,35 @@
+Or Roadmap
+-------------------------------------------------------------
+- Glossary -
+Monopoly Properties = MP
+Utilities = UT
+Rail Road = RR
+
+-------------------------------------------------------------
+Phase 0) (Solo Interactions)
+- Roll Dice
+- Move Board/Set Piece
+- Answer Questions
+- Rolling Doubles
+Phase 1) (Solo Property Work)
+- Binary returns from questions
+- Player Inventory/Points
+- Purchase/failure to purchase of an unowned MP (easy)
+- Purchase/failure to purchase of an unowned MP (med)
+- Purchase/failure to purchase of an unowned MP (hard)
+- Purchase/failure to purchase of an unowned RR
+- Purchase/failure to purchase of an unowned UT
+Phase 3) (ACTION TILES)
+- GO
+- Get Laid Off
+- Unemployed/Vacation
+- Free Parking
+- Chance
+- Community Chest
+Phase 4) (MULTYPLAYER FUNCTIONALITY)
+- Who goes first (roll off) 
+- Paying Rent on owned MP (easy)
+- Paying Rent on owned MP (med)
+- Paying Rent on owned MP (hard)
+- Paying Rent on owned RR
+- Paying Rent on owned UT
