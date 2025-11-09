@@ -1,0 +1,206 @@
+{
+  "chance": [
+    {
+      "title": "Sudden Team Reorg",
+      "body": "Your target org splits and reqs shuffle.",
+      "outcome": { "move": -2, "cash": -60, "note": "Backtrack and reapply" }
+    },
+    {
+      "title": "Lightning Ref",
+      "body": "An alum drops your resume into the hiring channel.",
+      "outcome": { "cash": 160, "repeat_turn": true }
+    },
+    {
+      "title": "Airport Delay",
+      "body": "Onsite flight gets delayed; interview rescheduled.",
+      "outcome": { "cash": -70, "turns_skip": 1 }
+    },
+    {
+      "title": "Panelist You Know",
+      "body": "You’ve paired with one interviewer before.",
+      "outcome": { "cash": 120, "note": "Instant rapport" }
+    },
+    {
+      "title": "System Design Plot Twist",
+      "body": "They switch from queues to search ranking mid-interview.",
+      "outcome": { "cash": -60, "move": -1 }
+    },
+    {
+      "title": "Algorithm Epiphany",
+      "body": "You spot a greedy optimization on the fly.",
+      "outcome": { "cash": 150 }
+    },
+    {
+      "title": "Recruiter Out Sick",
+      "body": "Everything slips a week.",
+      "outcome": { "turns_skip": 1, "note": "Hurry up and wait" }
+    },
+    {
+      "title": "Comp Band Surprise",
+      "body": "Role is up-leveled after calibration.",
+      "outcome": { "cash": 180, "move": 1 }
+    },
+    {
+      "title": "Test Environment Down",
+      "body": "Live coding sandbox crashes.",
+      "outcome": { "cash": -50, "repeat_turn": true, "note": "Retry granted" }
+    },
+    {
+      "title": "Hiring Freeze Thaw",
+      "body": "The freeze lifts—your req reopens.",
+      "outcome": { "cash": 130 }
+    },
+    {
+      "title": "Leaky Behavioral Story",
+      "body": "One story contradicts another.",
+      "outcome": { "cash": -80 }
+    },
+    {
+      "title": "Executive Shadow",
+      "body": "VP sits in and likes your framing.",
+      "outcome": { "cash": 200, "move": 2 }
+    },
+    {
+      "title": "Bad Internet",
+      "body": "Your video glitches during the signal question.",
+      "outcome": { "cash": -70, "note": "Hotspot next time" }
+    },
+    {
+      "title": "Whiteboard Redemption",
+      "body": "You refactor to O(n log n) under time.",
+      "outcome": { "cash": 140 }
+    },
+    {
+      "title": "Backchannel Ping",
+      "body": "A former peer vouches for your teamwork.",
+      "outcome": { "cash": 110 }
+    },
+    {
+      "title": "Offer Explodes",
+      "body": "Exploding deadline pressures you.",
+      "outcome": { "cash": -90, "note": "Clock is ticking" }
+    },
+    {
+      "title": "Roll Again",
+      "body": "The interviewer extends the session; momentum is good.",
+      "outcome": { "repeat_turn": true }
+    },
+    {
+      "title": "Start Over Clean",
+      "body": "You decide to regroup and relaunch the loop.",
+      "outcome": { "move_to": "start", "cash": 100 }
+    },
+    {
+      "title": "Security Curveball",
+      "body": "OAuth scopes pop up unexpectedly.",
+      "outcome": { "cash": -60 }
+    },
+    {
+      "title": "Hiring Manager Fan",
+      "body": "HM connects your experience to team roadmap.",
+      "outcome": { "cash": 170 }
+    }
+  ],
+  "community": [
+    {
+      "title": "Study Group Uplift",
+      "body": "Weekly mock sessions sharpen your answers.",
+      "outcome": { "cash": 120, "inventory_add": ["study-group"] }
+    },
+    {
+      "title": "Resume Review Circle",
+      "body": "Peers fix typos and streamline bullets.",
+      "outcome": { "cash": 90 }
+    },
+    {
+      "title": "Open Source Appreciation",
+      "body": "Maintainer highlights your contribution in a newsletter.",
+      "outcome": { "cash": 100 }
+    },
+    {
+      "title": "Mentor Office Hours",
+      "body": "Senior engineer reviews your SD approach.",
+      "outcome": { "cash": 130 }
+    },
+    {
+      "title": "Community Job Board",
+      "body": "You discover a hidden mid-level role.",
+      "outcome": { "cash": 80, "move": 1 }
+    },
+    {
+      "title": "Volunteer Talk",
+      "body": "You give a short tech talk; new connections ensue.",
+      "outcome": { "cash": 140, "inventory_add": ["speaking-credit"] }
+    },
+    {
+      "title": "Mock Interview Swap",
+      "body": "You and a buddy trade rounds.",
+      "outcome": { "cash": 70, "repeat_turn": true }
+    },
+    {
+      "title": "Discord Debug Help",
+      "body": "Community unblocks your coding task.",
+      "outcome": { "cash": 85 }
+    },
+    {
+      "title": "Charity Coding Night",
+      "body": "Ship a feature for a nonprofit; great story ammo.",
+      "outcome": { "cash": 100, "inventory_add": ["impact-story"] }
+    },
+    {
+      "title": "Referral Chain",
+      "body": "Friend of a friend passes your profile along.",
+      "outcome": { "cash": 110, "inventory_add": ["warm-referral"] }
+    },
+    {
+      "title": "Coffee Roulette",
+      "body": "Random pairing introduces you to a hiring TL.",
+      "outcome": { "cash": 95 }
+    },
+    {
+      "title": "Accountability Buddy",
+      "body": "Daily check-ins keep you on track.",
+      "outcome": { "cash": 75 }
+    },
+    {
+      "title": "Community Chest: Pay It Forward",
+      "body": "You help someone prep; karma comes back.",
+      "outcome": { "cash": 60, "note": "Goodwill banked" }
+    },
+    {
+      "title": "Forum Post Flop",
+      "body": "Your question gets downvoted for lack of detail.",
+      "outcome": { "cash": -40 }
+    },
+    {
+      "title": "Hackathon Weekend",
+      "body": "Team builds a polished demo.",
+      "outcome": { "cash": 150, "inventory_add": ["portfolio-project"] }
+    },
+    {
+      "title": "Newsletter Lead",
+      "body": "A niche newsletter lists an opening.",
+      "outcome": { "cash": 80 }
+    },
+    {
+      "title": "Community Guidelines Warning",
+      "body": "Self-promo post removed.",
+      "outcome": { "cash": -50, "note": "Read the rules" }
+    },
+    {
+      "title": "Free Course Scholarship",
+      "body": "You get access to a top interview course.",
+      "outcome": { "cash": 160, "inventory_add": ["course-access"] }
+    },
+    {
+      "title": "Local Meetup",
+      "body": "You meet a future teammate over pizza.",
+      "outcome": { "cash": 120 }
+    },
+    {
+      "title": "Thank-You Train",
+      "body": "You publish kudos to mentors; visibility rises.",
+      "outcome": { "cash": 90 }
+    }
+  ]
+}
