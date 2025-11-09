@@ -21,13 +21,9 @@ def _debug(msg: str):
     print(f"[server] {msg}")
 
 
-# FORCED_ROLLS = deque([
-#     (2, 2),
-#     (6, 5),
-#     (5, 5),
-#     (5, 5),
-#     (5, 4),
-# ])
+FORCED_ROLLS = deque([
+    (2, 3),
+])
 
 
 def new_game():
@@ -270,12 +266,22 @@ def post_roll():
 @app.post("/prefetch")
 def post_prefetch(pos: int = Body(..., embed=True)):
     landing = BOARD[pos]
-    if landing.ttype == "COMPANY" and landing.payload.get("group") not in ("RR", "UTIL"):
+    group = landing.payload.get("group") if landing.ttype == "COMPANY" else None
+
+    # Railroads: prefetch MEDIUM LC
+    if landing.ttype == "COMPANY" and group == "RR":
+        diff = "MEDIUM"
+        q = generate_lc_question(diff)
+        GAME["prefetch"] = {"pos": pos, "pending": {"type": f"LC_{diff}", "question": q}}
+        _debug("POST /prefetch created RR LC_MEDIUM")
+        return {"ok": True, "has_prefetch": True}
+
+    if landing.ttype == "COMPANY" and group not in ("RR", "UTIL"):
         # If the property is already owned but not a full monopoly, do not prefetch
         prop_name = landing.name
         owned = prop_name in _owned_names_set()
-        group = _group_of(landing)
-        has_mono = _has_full_monopoly(group) if owned else False
+        g = _group_of(landing)
+        has_mono = _has_full_monopoly(g) if owned else False
 
         if owned and not has_mono:
             GAME["prefetch"] = None
@@ -305,20 +311,34 @@ def post_prefetch(pos: int = Body(..., embed=True)):
 @app.post("/resolve")
 def post_resolve():
     landing = BOARD[GAME["pos"]]
+    group = landing.payload.get("group") if landing.ttype == "COMPANY" else None
 
-    if landing.ttype == "COMPANY" and landing.payload.get("group") not in ("RR", "UTIL"):
+    # Railroads: issue MEDIUM LC question
+    if landing.ttype == "COMPANY" and group == "RR":
+        if GAME.get("prefetch") and GAME["prefetch"].get("pos") == GAME["pos"]:
+            GAME["pending"] = GAME["prefetch"]["pending"]
+            GAME["prefetch"] = None
+            _debug("POST /resolve served prefetched RR LC_MEDIUM")
+            return {"pending": GAME["pending"]}
+        diff = "MEDIUM"
+        q = generate_lc_question(diff)
+        GAME["pending"] = {"type": f"LC_{diff}", "question": q}
+        _debug("POST /resolve created RR LC_MEDIUM")
+        return {"pending": GAME["pending"]}
+
+    if landing.ttype == "COMPANY" and group not in ("RR", "UTIL"):
         prop_name = landing.name
         owned = prop_name in _owned_names_set()
-        group = _group_of(landing)
-        has_mono = _has_full_monopoly(group) if owned else False
+        g = _group_of(landing)
+        has_mono = _has_full_monopoly(g) if owned else False
 
         # If owned but not a full monopoly: no question, show info, end turn
         if owned and not has_mono:
-            missing = _missing_in_group(group)
+            missing = _missing_in_group(g)
             GAME["last_outcome"] = {
                 "kind": "info",
                 "title": "You own this, but not the full set",
-                "feedback": f"You need the entire {group} set to start building. Missing: {', '.join(missing)}." if missing else f"You need the entire {group} set to start building.",
+                "feedback": f"You need the entire {g} set to start building. Missing: {', '.join(missing)}." if missing else f"You need the entire {g} set to start building.",
                 "judge_source": None,
             }
             end_turn()

@@ -47,52 +47,52 @@ def prop(name: str, price: int, gate: str, group: str, qkind: str) -> Tile:
 BOARD: List[Tile] = [
     # Bottom row, right to left
     Tile("GO", "START", {}),  # 0
-    prop("Property 1", 60, "LC_EASY", "BROWN", "SD"),  # 1
+    prop("FedEx", 60, "LC_EASY", "BROWN", "SD"),  # 1
     Tile("Community Chest", "COMMUNITY", {}),  # 2
-    prop("Property 2", 60, "LC_EASY", "BROWN", "BH"),  # 3
+    prop("Starbucks", 60, "LC_EASY", "BROWN", "BH"),  # 3
     # Income Tax -> third BROWN property
-    prop("Property 2A", 70, "LC_EASY", "BROWN", "LC"),  # 4
+    prop("Target", 70, "LC_EASY", "BROWN", "LC"),  # 4
     # Railroads/utilities unchanged
-    prop("Railroad 1", 200, "LC_MED", "RR", ""),  # 5
-    prop("Property 3", 100, "LC_EASY", "LIGHT_BLUE", "BH"),  # 6
+    prop("NYC", 200, "LC_MED", "RR", "LC"),  # 5
+    prop("Enterprise", 100, "LC_EASY", "LIGHT_BLUE", "BH"),  # 6
     Tile("Chance", "CHANCE", {}),  # 7
-    prop("Property 4", 100, "LC_MED", "LIGHT_BLUE", "SD"),  # 8
-    prop("Property 5", 120, "LC_MED", "LIGHT_BLUE", "LC"),  # 9  -> Jail corner next
+    prop("Nokia", 100, "LC_MED", "LIGHT_BLUE", "SD"),  # 8
+    prop("Hertz", 120, "LC_MED", "LIGHT_BLUE", "LC"),  # 9  -> Jail corner next
 
     # Left column, bottom to top
     Tile("Jail", "JAIL", {}),  # 10
-    prop("Property 6", 140, "LC_MED", "PINK", "LC"),  # 11
+    prop("Odoo", 140, "LC_MED", "PINK", "LC"),  # 11
     prop("Utility 1", 150, "LC_MED", "UTIL", ""),  # 12
-    prop("Property 7", 140, "LC_MED", "PINK", "BH"),  # 13
-    prop("Property 8", 160, "LC_HARD", "PINK", "SD"),  # 14
-    prop("Railroad 2", 200, "LC_MED", "RR", ""),  # 15
-    prop("Property 9", 180, "LC_MED", "ORANGE", "SD"),  # 16
+    prop("Adobe", 140, "LC_MED", "PINK", "BH"),  # 13
+    prop("eBay", 160, "LC_HARD", "PINK", "SD"),  # 14
+    prop("SF", 200, "LC_MED", "RR", "LC"),  # 15
+    prop("Moog", 180, "LC_MED", "ORANGE", "SD"),  # 16
     Tile("Community Chest", "COMMUNITY", {}),  # 17
-    prop("Property 10", 180, "LC_MED", "ORANGE", "LC"),  # 18
-    prop("Property 11", 200, "LC_HARD", "ORANGE", "BH"),  # 19 -> Free Parking corner
+    prop("Valmar", 180, "LC_MED", "ORANGE", "LC"),  # 18
+    prop("M&T", 200, "LC_HARD", "ORANGE", "BH"),  # 19 -> Free Parking corner
 
     # Top row, left to right
     Tile("Free Parking", "FREE_PARKING", {}),  # 20
-    prop("Property 12", 220, "LC_MED", "RED", "LC"),  # 21
+    prop("IBM", 220, "LC_MED", "RED", "LC"),  # 21
     Tile("Chance", "CHANCE", {}),  # 22
-    prop("Property 13", 220, "LC_HARD", "RED", "SD"),  # 23
-    prop("Property 14", 240, "LC_HARD", "RED", "BH"),  # 24
-    prop("Railroad 3", 200, "LC_MED", "RR", ""),  # 25
-    prop("Property 15", 260, "LC_HARD", "YELLOW", "LC"),  # 26
-    prop("Property 16", 260, "LC_HARD", "YELLOW", "BH"),  # 27
+    prop("AMD", 220, "LC_HARD", "RED", "SD"),  # 23
+    prop("Palantir", 240, "LC_HARD", "RED", "BH"),  # 24
+    prop("Austin", 200, "LC_MED", "RR", "LC"),  # 25
+    prop("Tesla", 260, "LC_HARD", "YELLOW", "LC"),  # 26
+    prop("Netflix", 260, "LC_HARD", "YELLOW", "BH"),  # 27
     prop("Utility 2", 150, "LC_MED", "UTIL", ""),  # 28
-    prop("Property 17", 280, "LC_HARD", "YELLOW", "SD"),  # 29 -> Go To Jail corner
+    prop("Samsung", 280, "LC_HARD", "YELLOW", "SD"),  # 29 -> Go To Jail corner
 
     # Right column, top to bottom
     Tile("Go To Jail", "GOTO_JAIL", {}),  # 30
-    prop("Property 18", 300, "SYS_DESIGN", "GREEN", "BH"),  # 31
-    prop("Property 19", 300, "SYS_DESIGN", "GREEN", "LC"),  # 32
+    prop("Meta", 300, "SYS_DESIGN", "GREEN", "BH"),  # 31
+    prop("Amazon", 300, "SYS_DESIGN", "GREEN", "LC"),  # 32
     Tile("Community Chest", "COMMUNITY", {}),  # 33
-    prop("Property 20", 320, "SYS_DESIGN", "GREEN", "SD"),  # 34
-    prop("Railroad 4", 200, "LC_MED", "RR", ""),  # 35
+    prop("Google", 320, "SYS_DESIGN", "GREEN", "SD"),  # 34
+    prop("Boston", 200, "LC_MED", "RR", "LC"),  # 35
     Tile("Chance", "CHANCE", {}),  # 36
-    prop("Property 21", 350, "SYS_DESIGN", "DARK_BLUE", "BH"),  # 37
+    prop("Nvidia", 350, "SYS_DESIGN", "DARK_BLUE", "BH"),  # 37
     # Luxury Tax -> third DARK_BLUE property
-    prop("Property 21A", 380, "SYS_DESIGN", "DARK_BLUE", "SD"),  # 38
-    prop("Property 22", 400, "BEHAVIORAL", "DARK_BLUE", "LC"),  # 39 back to GO next
+    prop("Microsoft", 380, "SYS_DESIGN", "DARK_BLUE", "SD"),  # 38
+    prop("Apple", 400, "BEHAVIORAL", "DARK_BLUE", "LC"),  # 39 back to GO next
 ]

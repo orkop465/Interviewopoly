@@ -29,7 +29,7 @@ function isProp(t){ return t.ttype==="COMPANY" && !isRR(t) && !isUTIL(t); }
 function tileFillStripe(t){
   if (t.ttype==="CHANCE"||t.ttype==="COMMUNITY") return [BOARD_BLUE,null,true];
   if (isProp(t)) return ["#FFFFFF", GROUP_COLORS[t.payload.group], false];
-  if (isRR(t)) return ["#FFFFFF","#000000",false];
+  if (isRR(t)) return ["#FFFFFF","#6B7280",false];
   if (isUTIL(t)) return ["#FFFFFF",null,false];
   return ["#FFFFFF",null,false];
 }
@@ -260,10 +260,12 @@ function willTileProduceQuestion(tile){
   if (!tile) return false;
   if (tile.ttype !== "COMPANY") return false;
   const group = tile.payload?.group;
-  if (group === "RR" || group === "UTIL") return false;
+  if (group === "UTIL") return false;
+  if (group === "RR") return true;
   const qk = (tile.payload?.qkind || "").toUpperCase();
   return qk === "LC" || qk === "SD" || qk === "BH";
 }
+
 
 async function doRoll(){
   const btn = el("#btn-roll"); btn.disabled = true;
