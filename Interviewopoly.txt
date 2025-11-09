@@ -30,6 +30,10 @@ Just Quit
 ---------------------------------------------------------------------------------------------------------------------
 
 Single Player Gameplay Loop)
+-At Game Start-
+0 Points
+0 Properties
+Player selected set piece
 -Start of Turn-
 Roll Dice to determine where what tile you land on
 -Action Phase-
@@ -52,6 +56,7 @@ Only if you own a monopoly:
         - you gain a hotel on that property
     If your answer is incorrect:
         - nothing happens
+-Bargaining?- 
 -Next Turn Begins-
 
 ---------------------------------------------------------------------------------------------------------------------
@@ -82,13 +87,20 @@ The amount of score gained/lost is determined by the difficulty of the question 
   - Incorrect) Score decrements
 
 Landing on a railroad) 
-Just like a monopoly property, it is either owned or unowned.
-Land on Owned: Spin a wheel, determines medium question; LeetCode, Behavioral or System Design. If you answer the question wrong your score decrements depending on if the owner owns:
+If the property is:
+Owned) Spin a wheel, determines medium question; LeetCode, Behavioral or System Design.
+    If the answer is correct:
+        - The player will have 0 score taken from them and the owner will gain 0 score
+    If the answer is incorrect check if the owner has:
     - 1 RR) player -25pts, owner +25pts
     - 2 RR) player -50pts, owner +50pts
     - 1 RR) player -100pts, owner +100pts
     - 2 RR) player -200pts, owner +200pts 
-Land on unowned: Spin a wheel, determines medium question; LeetCode, Behavioral or System Design. Answer the question to determine ownership.
+Unowned) Spin a wheel, determines medium question; LeetCode, Behavioral or System Design. Answer the question to determine ownership.
+    If the answer is correct:
+        - The player will be granted ownership of the property
+    If the answer is incorrect: 
+        - The player will not be granted ownership of the property
 
 Landing on an easy monopoly property)
 If the property is:
@@ -138,7 +150,7 @@ owned) The player will be prompted to answer an hard question from the predeterm
         - 3 houses: player -1250pts, owner +1250pts
         - 4 houses: player -1750pts, owner +1750pts
         - 1 hotel: player -2000pts, owner +2000pts
-unowned) The player will be prompted to answer an easy question from the predetermined question type. 
+unowned) The player will be prompted to answer an hard question from the predetermined question type. 
     If the answer is correct:
         - The player will be granted ownership of the property
     If the answer is incorrect: 
@@ -146,16 +158,37 @@ unowned) The player will be prompted to answer an easy question from the predete
 
 Landing on a utility)
 If the property is:
-owned)
+owned) The player will spin a wheel, determines medium question; LeetCode, Behavioral or System Design. Answer the question to determine ownership. 
+    If the player is correct:
+    If the player is incorrect, check if the owner has:
+        - 1 utility owned: player -(4 * amountRolled)pts , owner +(4 * amountRolled)pts
+        - 2 utilities owned:  player -(10 * amountRolled)pts , owner +(10 * amountRolled)pts
+unowned) The player will spin a wheel, determines medium question; LeetCode, Behavioral or System Design. Answer the question to determine ownership.
+    If the answer is correct:
+        - The player will be granted ownership of the property
+    If the answer is incorrect: 
+        - The player will not be granted ownership of the property
 
-unowned) 
+Landing on Get Laid Off)
+- The player's set piece get's moved directly to Unemployed
+- They do not pass go nor do they get 200pts
+- Their turn ends there skipping the development phase
+
+Landing or passing go)
+- When a player lands on passes or go they must collect 200pts
+
+Getting out of Unemployed) 
+- Player selects one of three options if aplicable:
+    - Pay 50 pts
+    - Use a Get Out Of Jail Free Card
+    - Rolls Doubles
 
 
 ---------------------------------------------------------------------------------------------------------------------
 
 Board Layout:
 
-- Monopoly Property Tiles - (24)
+- Monopoly Property Tiles - (24) Done
 Every Monopoly will have three cards, one from each category, LeetCode, Behavioral or System Design.
 Brown) Difficulty Easy
 Light Blue) Difficulty Easy 
@@ -166,21 +199,20 @@ Yellow) Difficulty Medium
 Green) Difficulty Hard
 Blue) Difficulty Hard
 
-- Utilities - (2) 
+- Utilities - (2) Done 
 GitHub)
 AWS)
 
-- Railroads - (4)
+- Railroads - (4) Done
 Emacs)
 Vim)
 VSCode)
 Jet-Brains)
-
 - Chance - (3)
 
 - Community Chest - (3)
 
-- Go - (1)
+- Go - (1) Done
 
 - Get Laid Off - (1)
 
@@ -203,16 +235,21 @@ Home Screen Page:
         - email
         - password
     - Logout: Are you sure? Yes or No
-    -Rules -> Rules Page
+    - Rules -> Rules Page
 Game Screen Page:
     - Rules -> Rules Page
     - Pause
         - Save Quit: Are you sure? It will overwrite any previous saves
         - Just Quit: Are you sure? It will not save your current game
-    - 
+    - Inventory
+        - Properties Owned
+        - Point count
+        - Set Piece
 Create Game Page:
 - Single or Local Multiplayer
 - If Multiplayer, how many players
 - Every player selects one of n pieces
 Rules Page:
 - Displays rules broke into sections
+
+---------------------------------------------------------------------------------------------------------------------
